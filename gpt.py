@@ -1,12 +1,13 @@
 import os
 import sys
 
-import openai
 from rich import print
 from rich.padding import Padding
 from rich.progress import Progress
+from openai import OpenAI
 
-openai.api_key = os.environ.get("OPENAI_KEY")
+
+client = OpenAI(api_key=os.environ.get("OPENAI_KEY"))
 
 
 def main(prompt: str):
@@ -16,15 +17,14 @@ def main(prompt: str):
 
     with Progress(transient=True) as progress:
         progress.add_task("[red]Asking GPT-4...", start=False, total=None)
-        result = openai.ChatCompletion.create(
-            model="gpt-4", messages=[{"role": "user", "content": prompt}]
+
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}], model="gpt-4"
         )
 
-    answer_text = result["choices"][0]["message"]["content"]
+    answer_text = chat_completion.choices[0].message.content
     answer = Padding(answer_text, (2, 4))
     print(answer)
-
-
 
 
 if __name__ == "__main__":

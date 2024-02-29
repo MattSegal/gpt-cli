@@ -1,3 +1,39 @@
+function dalle {
+    if [ -z "$GPT_HOME" ]
+    then
+        echo "GPT_HOME not set"
+        return
+    fi
+    DALLE_PROMPT="$@"
+    if [ -z "$DALLE_PROMPT" ] || [ "$1" == "--help" ]
+    then
+        dalle_help_text
+        return
+    fi
+    TEMPFILE=`mktemp`
+    $GPT_HOME/venv/bin/python $GPT_HOME/dalle.py $TEMPFILE "$DALLE_PROMPT"
+    IMAGE_URL=`cat $TEMPFILE`
+    URL_REGEX='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+    if [[ $IMAGE_URL =~ $URL_REGEX ]]
+    then
+        echo "Opening generated image with $DALLE_IMAGE_OPENER"
+        $DALLE_IMAGE_OPENER $IMAGE_URL
+    else
+        echo "$IMAGE_URL"
+    fi
+}
+
+function dalle_help_text {
+    echo ""
+    echo "Ask DALL-E-3 to generate an image. Usage:"
+    echo ""
+    echo "  dalle the best hamburger ever"
+    echo "  dalle a skier doing a backflip high quality photorealistic"
+    echo "  dalle an oil painting of the best restaurant in melbourne"
+    echo ""
+}
+
+
 function gpt {
     if [ -z "$GPT_HOME" ]
     then
