@@ -9,6 +9,8 @@ from openai import OpenAI
 
 client = OpenAI()
 
+GPT_MODEL = "gpt-4-1106-preview"
+
 
 def main(prompt: str):
     if not prompt:
@@ -19,7 +21,7 @@ def main(prompt: str):
         progress.add_task("[red]Asking GPT-4...", start=False, total=None)
 
         chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}], model="gpt-4"
+            messages=[{"role": "user", "content": prompt}], model=GPT_MODEL
         )
 
     answer_text = chat_completion.choices[0].message.content
