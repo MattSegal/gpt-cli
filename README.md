@@ -19,7 +19,7 @@ pip install -r requirements.txt
 .bashrc:
 
 ```bash
-export OPENAI_KEY="sk-XXXXXXXX"
+export OPENAI_API_KEY="sk-XXXXXXXX"
 export DALLE_IMAGE_OPENER="google-chrome"
 export GPT_HOME="/home/myname/code/gpt
 . $GPT_HOME/funcs.sh

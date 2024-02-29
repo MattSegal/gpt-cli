@@ -7,7 +7,7 @@ from rich.progress import Progress
 from openai import OpenAI
 
 
-client = OpenAI(api_key=os.environ.get("OPENAI_KEY"))
+client = OpenAI()
 
 
 def main(prompt: str):
