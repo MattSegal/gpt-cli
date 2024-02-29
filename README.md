@@ -2,6 +2,11 @@
 
 ![](./gpt.gif)
 
+# Functions provided:
+
+- gpt: Ask GPT-4 a question
+- pex: Explain the technical terms and jargon in the contents of your clipboard (requires xclip)
+
 ## Local setup
 
 ```bash
