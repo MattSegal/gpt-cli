@@ -2,7 +2,7 @@
 
 ![](./gpt.gif)
 
-# Functions provided:
+# Bash Functions provided:
 
 - gpt: Ask GPT-4 a question
 - dalle: Ask DALL-E-3 to generate an image

@@ -23,8 +23,9 @@ def main(filename: str, prompt: str):
         response = client.images.generate(
             model="dall-e-3",
             prompt=prompt,
+            style="vivid",
             size="1792x1024",
-            quality="standard",
+            quality="hd",
             n=1,
         )
 
