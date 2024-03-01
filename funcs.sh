@@ -72,7 +72,18 @@ function pex {
         echo "xclip is not installed"
         return
     fi
+    if [ "$1" == "--empty" ]
+    then
+        empty_clipboard
+        echo "Clipboard emptied"
+        return
+    fi
     CLIPBOARD_TEXT=`xclip -o sel clip`
+    if [ "$1" == "--check" ]
+    then
+        echo -e "Clipboard contents:\n\n${CLIPBOARD_TEXT}\n"
+        return
+    fi
     if [ -z "$CLIPBOARD_TEXT" ] || [ "$1" == "--help" ]
     then
         pex_help_text
@@ -80,10 +91,11 @@ function pex {
     fi
     GPT_PROMPT="$PEX_PREFIX $CLIPBOARD_TEXT"
     $GPT_HOME/venv/bin/python $GPT_HOME/gpt.py "$GPT_PROMPT"
-    # Empty clipboard
+    empty_clipboard
+}
+
+function empty_clipboard {
     cat /dev/null | xclip -i
-
-
 }
 
 function pex_help_text {
@@ -91,7 +103,10 @@ function pex_help_text {
     echo "Ask GPT-4 to (please) explain the technical terms in the contents of your clipboard."
     echo "Usage:"
     echo ""
-    echo "  pex"
+    echo "  pex          # Query GPT-4 with clipboard contents"
+    echo "  pex --empty  # Empties clipboard"
+    echo "  pex --check  # Check contents of clipboard"
+    echo "  pex --help   # Print this message"
     echo ""
     echo "Prompt prefix:"
     echo ""
