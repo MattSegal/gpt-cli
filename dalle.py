@@ -1,9 +1,7 @@
-import os
 import sys
 
-from rich import print
-from rich.progress import Progress
 from openai import OpenAI
+from rich.progress import Progress
 
 
 client = OpenAI()

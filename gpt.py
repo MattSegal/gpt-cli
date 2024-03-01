@@ -1,10 +1,10 @@
-import os
 import sys
 
+from openai import OpenAI
 from rich import print
+from rich.markup import escape
 from rich.padding import Padding
 from rich.progress import Progress
-from openai import OpenAI
 
 
 client = OpenAI()
@@ -25,7 +25,7 @@ def main(prompt: str):
         )
 
     answer_text = chat_completion.choices[0].message.content
-    answer = Padding(answer_text, (2, 4))
+    answer = Padding(escape(answer_text), (2, 4))
     print(answer)
 
 
