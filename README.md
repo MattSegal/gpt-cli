@@ -10,7 +10,7 @@
 
 [Pricing](https://openai.com/pricing):
 
-- GPT-4 Turbo: $10.00 / 1M tokens ~= 0.25c per 1024 characters
+- GPT-4 Turbo: $10.00 / 1M tokens ~= 0.25c per 1000 input characters
 - DALL-E 3: 12c USD / image
 
 ## Local setup
@@ -39,5 +39,5 @@ Reload your terminal and try it out out:
 ```bash
 gpt --help
 dalle --help
-pex --help
+pex --help  # xclip required
 ```
