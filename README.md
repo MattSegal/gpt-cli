@@ -15,17 +15,29 @@
 
 ## Local setup
 
+Install project requirements:
+
 ```bash
 python3 -m venv venv
 . ./venv/bin/activate
 pip install -r requirements.txt
 ```
 
-.bashrc:
+Setup .bashrc:
 
 ```bash
-export OPENAI_API_KEY="sk-XXXXXXXX"
-export DALLE_IMAGE_OPENER="google-chrome"
-export GPT_HOME="/home/myname/code/gpt
+export OPENAI_API_KEY="sk-XXXXXXXX" # OpenAI API key
+export DALLE_IMAGE_OPENER="google-chrome" # Executable to open URLs
+export GPT_HOME="/home/myname/code/gpt" # Wherever you cloned this project
+
+# Load bash functions
 . $GPT_HOME/funcs.sh
+```
+
+Reload your terminal and try it out out:
+
+```bash
+gpt --help
+dalle --help
+pex --help
 ```
