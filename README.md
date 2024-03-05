@@ -27,6 +27,8 @@ Setup .bashrc:
 
 ```bash
 export OPENAI_API_KEY="sk-XXXXXXXX" # OpenAI API key
+export ANTHROPIC_API_KEY=sk-XXXXXXXX # Anthropic API key
+
 export DALLE_IMAGE_OPENER="google-chrome" # Executable to open URLs
 export GPT_HOME="/home/myname/code/gpt" # Wherever you cloned this project
 
