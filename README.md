@@ -7,6 +7,7 @@
 - gpt: Ask GPT-4 a question
 - dalle: Ask DALL-E 3 to generate an image
 - pex: Explain the technical terms and jargon in the contents of your clipboard (requires xclip)
+- diffcheck: Check your git diff for errors or mistakes (requires git)
 
 [Pricing](https://openai.com/pricing):
 
@@ -42,4 +43,5 @@ Reload your terminal and try it out out:
 gpt --help
 dalle --help
 pex --help  # xclip required
+diffcheck --help  # git required
 ```

@@ -22,7 +22,7 @@ class GPTModel:
 
 
 USE_ANTHROPIC = True
-ANTHROPIC_MODEL = ClaudeModel.Sonnet
+ANTHROPIC_MODEL = ClaudeModel.Opus
 GPT_MODEL = GPTModel.FourTurbo
 
 
@@ -34,7 +34,10 @@ def main(prompt: str):
     with Progress(transient=True) as progress:
         if USE_ANTHROPIC:
             progress.add_task("[red]Asking Claude 3...", start=False, total=None)
-            answer_text = prompt_anthropic(prompt)
+            try:
+                answer_text = prompt_anthropic(prompt)
+            except anthropic.InternalServerError:
+                answer_text = "Request failed - Anthropic is broken"
         else:
             progress.add_task("[red]Asking GPT-4...", start=False, total=None)
             answer_text = prompt_gpt(prompt)

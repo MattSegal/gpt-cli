@@ -1,21 +1,18 @@
 function dalle {
-    if [ -z "$GPT_HOME" ]
-    then
+    if [ -z "$GPT_HOME" ]; then
         echo "GPT_HOME not set"
         return
     fi
     DALLE_PROMPT="$@"
-    if [ -z "$DALLE_PROMPT" ] || [ "$1" == "--help" ]
-    then
+    if [ -z "$DALLE_PROMPT" ] || [ "$1" == "--help" ]; then
         dalle_help_text
         return
     fi
-    TEMPFILE=`mktemp`
+    TEMPFILE=$(mktemp)
     $GPT_HOME/venv/bin/python $GPT_HOME/dalle.py $TEMPFILE "$DALLE_PROMPT"
-    IMAGE_URL=`cat $TEMPFILE`
+    IMAGE_URL=$(cat $TEMPFILE)
     URL_REGEX='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
-    if [[ $IMAGE_URL =~ $URL_REGEX ]]
-    then
+    if [[ $IMAGE_URL =~ $URL_REGEX ]]; then
         echo "Opening generated image with $DALLE_IMAGE_OPENER"
         $DALLE_IMAGE_OPENER $IMAGE_URL
     else
@@ -33,16 +30,13 @@ function dalle_help_text {
     echo ""
 }
 
-
 function gpt {
-    if [ -z "$GPT_HOME" ]
-    then
+    if [ -z "$GPT_HOME" ]; then
         echo "GPT_HOME not set"
         return
     fi
     GPT_PROMPT="$@"
-    if [ -z "$GPT_PROMPT" ] || [ "$1" == "--help" ]
-    then
+    if [ -z "$GPT_PROMPT" ] || [ "$1" == "--help" ]; then
         gpt_help_text
         return
     fi
@@ -62,30 +56,25 @@ function gpt_help_text {
 PEX_PREFIX="as an expert, please explain technical terms and jargon here in precise detail, one by one in a list, assuming a sophisticated audience:"
 
 function pex {
-    if [ -z "$GPT_HOME" ]
-    then
+    if [ -z "$GPT_HOME" ]; then
         echo "GPT_HOME not set"
         return
     fi
-    if [ -z `which xclip` ]
-    then
+    if [ -z $(which xclip) ]; then
         echo "xclip is not installed"
         return
     fi
-    if [ "$1" == "--empty" ]
-    then
+    if [ "$1" == "--empty" ]; then
         empty_clipboard
         echo "Clipboard emptied"
         return
     fi
-    CLIPBOARD_TEXT=`xclip -o sel clip`
-    if [ "$1" == "--check" ]
-    then
+    CLIPBOARD_TEXT=$(xclip -o sel clip)
+    if [ "$1" == "--check" ]; then
         echo -e "Clipboard contents:\n\n${CLIPBOARD_TEXT}\n"
         return
     fi
-    if [ -z "$CLIPBOARD_TEXT" ] || [ "$1" == "--help" ]
-    then
+    if [ -z "$CLIPBOARD_TEXT" ] || [ "$1" == "--help" ]; then
         pex_help_text
         return
     fi
@@ -111,5 +100,41 @@ function pex_help_text {
     echo "Prompt prefix:"
     echo ""
     echo "  $PEX_PREFIX"
+    echo ""
+}
+
+DIFFCHECK_PREFIX="the following code is a git diff for my codebase, check it for any errors or mistakes:"
+
+function diffcheck {
+    if [ -z "$GPT_HOME" ]; then
+        echo "GPT_HOME not set"
+        return
+    fi
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        DIFF=$(git diff)
+        if [ -z "$DIFF" ] || [ "$1" == "--help" ]; then
+            diffcheck_help_text
+            return
+        fi
+        GPT_PROMPT="$DIFFCHECK_PREFIX\n$DIFF"
+        $GPT_HOME/venv/bin/python $GPT_HOME/gpt.py "$GPT_PROMPT"
+    else
+        echo "Not inside a Git repository"
+        diffcheck_help_text
+        return
+    fi
+}
+
+function diffcheck_help_text {
+    echo ""
+    echo "Ask GPT-4 to check your git diff for errors or mistakes."
+    echo "Usage:"
+    echo ""
+    echo "  pex          # Query GPT-4 with diff"
+    echo "  pex --help   # Print this message"
+    echo ""
+    echo "Prompt prefix:"
+    echo ""
+    echo "  $DIFFCHECK_PREFIX"
     echo ""
 }
