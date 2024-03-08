@@ -1,4 +1,5 @@
 import sys
+import os
 
 import anthropic
 from openai import OpenAI
@@ -7,9 +8,13 @@ from rich.markup import escape
 from rich.padding import Padding
 from rich.progress import Progress
 
+USE_ANTHROPIC = os.getenv("ANTHROPIC_API_KEY") or False
 
 openai_client = OpenAI()
-anthropic_client = anthropic.Anthropic()
+
+anthropic_client = None
+if USE_ANTHROPIC:
+    anthropic_client = anthropic.Anthropic()
 
 
 class ClaudeModel:
@@ -21,7 +26,6 @@ class GPTModel:
     FourTurbo = "gpt-4-1106-preview"
 
 
-USE_ANTHROPIC = True
 ANTHROPIC_MODEL = ClaudeModel.Opus
 GPT_MODEL = GPTModel.FourTurbo
 
