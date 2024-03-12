@@ -138,3 +138,39 @@ function diffcheck_help_text {
     echo "  $DIFFCHECK_PREFIX"
     echo ""
 }
+
+COMMITMSG_PREFIX="the following code is a git diff for my codebase, please write a commit message:"
+
+function commitmsg {
+    if [ -z "$GPT_HOME" ]; then
+        echo "GPT_HOME not set"
+        return
+    fi
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        DIFF=$(git diff)
+        if [ -z "$DIFF" ] || [ "$1" == "--help" ]; then
+            commitmsg_help_text
+            return
+        fi
+        GPT_PROMPT="$COMMITMSG_PREFIX\n$DIFF"
+        $GPT_HOME/venv/bin/python $GPT_HOME/gpt.py "$GPT_PROMPT"
+    else
+        echo "Not inside a Git repository"
+        commitmsg_help_text
+        return
+    fi
+}
+
+function commitmsg_help_text {
+    echo ""
+    echo "Ask GPT-4 to write you a commit message."
+    echo "Usage:"
+    echo ""
+    echo "  commitmsg          # Query GPT-4 with diff"
+    echo "  commitmsg --help   # Print this message"
+    echo ""
+    echo "Prompt prefix:"
+    echo ""
+    echo "  $COMMITMSG_PREFIX"
+    echo ""
+}

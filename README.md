@@ -8,6 +8,7 @@
 - dalle: Ask DALL-E 3 to generate an image
 - pex: Explain the technical terms and jargon in the contents of your clipboard (requires xclip)
 - diffcheck: Check your git diff for errors or mistakes (requires git)
+- commitmsg: Write a commit message for your git diff (requires git)
 
 [Pricing](https://openai.com/pricing):
 
@@ -44,4 +45,5 @@ gpt --help
 dalle --help
 pex --help  # xclip required
 diffcheck --help  # git required
+commitmsg --help  # git required
 ```
