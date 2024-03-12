@@ -174,3 +174,62 @@ function commitmsg_help_text {
     echo "  $COMMITMSG_PREFIX"
     echo ""
 }
+
+function mrcheck {
+    if [ -z "$GPT_HOME" ]; then
+        echo "GPT_HOME not set"
+        return
+    fi
+    if [ -z $(which glab) ]; then
+        echo "glab is not installed"
+        return
+    fi
+
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+        echo "Pulling diff from gitlab..."
+        DIFF=$(glab mr diff $BRANCH_NAME)
+        if [ -z "$DIFF" ] || [ "$1" == "--help" ]; then
+            mrcheck_help_text
+            return
+        fi
+        read -r -d '' GPT_PROMPT <<EOF
+Your task is:
+- Review the code changes and provide feedback.
+- If there are any bugs, highlight them.
+- Provide details on missed use of best-practices.
+- Does the code do what it says in the commit messages?
+- Do not highlight minor issues and nitpicks.
+- Use bullet points if you have multiple comments.
+- Provide security recommendations if there are any.
+
+$@
+
+You are provided with the code changes (diffs) in a unidiff format. Here are the diffs:
+
+$DIFF
+
+All code changes have been provided. Please provide me with your code review based on all the changes
+EOF
+
+        $GPT_HOME/venv/bin/python $GPT_HOME/gpt.py "$GPT_PROMPT"
+    else
+        echo "Not inside a Git repository"
+        mrcheck_help_text
+        return
+    fi
+}
+
+function mrcheck_help_text {
+    echo ""
+    echo "Ask GPT-4 to check your mr diff for errors or mistakes."
+    echo "Usage:"
+    echo ""
+    echo "  mrcheck          # Query GPT-4 with mr diff"
+    echo "  mrcheck --help   # Print this message"
+    echo ""
+    echo "Prompt prefix:"
+    echo ""
+    echo "  $DIFFCHECK_PREFIX"
+    echo ""
+}
