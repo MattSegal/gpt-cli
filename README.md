@@ -11,10 +11,15 @@
 - commitmsg: Write a commit message for your git diff (requires git)
 - mrcheck: Check your gitlab merge request diff for errors or mistakes (requires glab)
 
-[Pricing](https://openai.com/pricing):
+[OpenAI Pricing](https://openai.com/pricing):
 
 - GPT-4 Turbo: $10.00 / 1M tokens ~= 0.25c per 1000 input characters
 - DALL-E 3: 12c USD / image
+
+[Anthropic Pricing](https://www.anthropic.com/api):
+
+- Opus: $15.00 / 1M tokens
+- Sonnet: $3.00 / 1M tokens
 
 ## Local setup
 
@@ -29,6 +34,7 @@ pip install -r requirements.txt
 Setup .bashrc:
 
 ```bash
+# You must set one of these two keys, Anthropic will be used if both are set
 export OPENAI_API_KEY="sk-XXXXXXXX" # OpenAI API key
 export ANTHROPIC_API_KEY=sk-XXXXXXXX # Anthropic API key
 

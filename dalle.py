@@ -1,7 +1,14 @@
 import sys
+import os
 
 from openai import OpenAI
 from rich.progress import Progress
+
+
+OPENAI_KEY_EXISTS = os.getenv("OPENAI_API_KEY") or False
+if not OPENAI_KEY_EXISTS:
+    print("No API key found: please set OPENAI_API_KEY to use DALL-E")
+    sys.exit(1)
 
 
 client = OpenAI()

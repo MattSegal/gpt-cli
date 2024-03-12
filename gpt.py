@@ -8,13 +8,19 @@ from rich.markup import escape
 from rich.padding import Padding
 from rich.progress import Progress
 
-USE_ANTHROPIC = os.getenv("ANTHROPIC_API_KEY") or False
+ANTHROPIC_KEY_EXISTS = os.getenv("ANTHROPIC_API_KEY") or False
+OPENAI_KEY_EXISTS = os.getenv("OPENAI_API_KEY") or False
 
-openai_client = OpenAI()
+anthropic_client, openai_client = None, None
+if OPENAI_KEY_EXISTS:
+    openai_client = OpenAI()
 
-anthropic_client = None
-if USE_ANTHROPIC:
+if ANTHROPIC_KEY_EXISTS:
     anthropic_client = anthropic.Anthropic()
+
+if not (openai_client or anthropic_client):
+    print("No API keys set: please set OPENAI_API_KEY or ANTHROPIC_API_KEY")
+    sys.exit(1)
 
 
 class ClaudeModel:
@@ -36,7 +42,7 @@ def main(prompt: str):
         return
 
     with Progress(transient=True) as progress:
-        if USE_ANTHROPIC:
+        if ANTHROPIC_KEY_EXISTS:
             progress.add_task("[red]Asking Claude 3...", start=False, total=None)
             try:
                 answer_text = prompt_anthropic(prompt)
