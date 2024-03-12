@@ -103,7 +103,7 @@ function pex_help_text {
     echo ""
 }
 
-DIFFCHECK_PREFIX="the following code is a git diff for my codebase, check it for any errors or mistakes:"
+DIFFCHECK_PREFIX="the following code is a git diff for my codebase, check it for any errors or mistakes"
 
 function diffcheck {
     if [ -z "$GPT_HOME" ]; then
@@ -116,7 +116,7 @@ function diffcheck {
             diffcheck_help_text
             return
         fi
-        GPT_PROMPT="$DIFFCHECK_PREFIX\n$DIFF"
+        GPT_PROMPT="$DIFFCHECK_PREFIX\n$@\n$DIFF"
         $GPT_HOME/venv/bin/python $GPT_HOME/gpt.py "$GPT_PROMPT"
     else
         echo "Not inside a Git repository"
@@ -139,7 +139,7 @@ function diffcheck_help_text {
     echo ""
 }
 
-COMMITMSG_PREFIX="the following code is a git diff for my codebase, please write a commit message:"
+COMMITMSG_PREFIX="the following code is a git diff for my codebase, please write a commit message"
 
 function commitmsg {
     if [ -z "$GPT_HOME" ]; then
@@ -152,7 +152,7 @@ function commitmsg {
             commitmsg_help_text
             return
         fi
-        GPT_PROMPT="$COMMITMSG_PREFIX\n$DIFF"
+        GPT_PROMPT="$COMMITMSG_PREFIX\n$@\n$DIFF"
         $GPT_HOME/venv/bin/python $GPT_HOME/gpt.py "$GPT_PROMPT"
     else
         echo "Not inside a Git repository"
