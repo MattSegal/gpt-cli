@@ -12,7 +12,7 @@ function dalle {
     $GPT_HOME/venv/bin/python $GPT_HOME/dalle.py $TEMPFILE "$DALLE_PROMPT"
     IMAGE_URL=$(cat $TEMPFILE)
     URL_REGEX='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
-    if [[ $IMAGE_URL =~ $URL_REGEX ]]; then
+    if [[ $IMAGE_URL =~ $URL_REGEX && $DALLE_IMAGE_OPENER ]]; then
         echo "Opening generated image with $DALLE_IMAGE_OPENER"
         $DALLE_IMAGE_OPENER $IMAGE_URL
     else
