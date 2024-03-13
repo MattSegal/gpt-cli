@@ -33,7 +33,7 @@ class GPTModel:
     FourTurbo = "gpt-4-1106-preview"
 
 
-ANTHROPIC_MODEL = ClaudeModel.Opus
+ANTHROPIC_MODEL = ClaudeModel.Haiku
 GPT_MODEL = GPTModel.FourTurbo
 
 model_options = {
