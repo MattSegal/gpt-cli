@@ -26,6 +26,7 @@ if not (openai_client or anthropic_client):
 class ClaudeModel:
     Opus = "claude-3-opus-20240229"
     Sonnet = "claude-3-sonnet-20240229"
+    Haiku = "claude-3-haiku-20240307"
 
 
 class GPTModel:
@@ -35,6 +36,12 @@ class GPTModel:
 ANTHROPIC_MODEL = ClaudeModel.Opus
 GPT_MODEL = GPTModel.FourTurbo
 
+model_options = {
+    "opus": ClaudeModel.Opus,
+    "sonnet": ClaudeModel.Sonnet,
+    "haiku": ClaudeModel.Haiku,
+}
+
 
 def main(prompt: str):
     if not prompt:
@@ -43,9 +50,18 @@ def main(prompt: str):
 
     with Progress(transient=True) as progress:
         if ANTHROPIC_KEY_EXISTS:
-            progress.add_task("[red]Asking Claude 3...", start=False, total=None)
+            model = ANTHROPIC_MODEL
+            model_name = "Claude 3"
+            for model_key, model_id in model_options.items():
+                if prompt.startswith(f"--{model_key}"):
+                    model = model_id
+                    model_name = f"Claude 3 ({model_key})"
+                    prompt = prompt.replace(f"--{model_key}", "")
+                    break
+
+            progress.add_task(f"[red]Asking {model_name}...", start=False, total=None)
             try:
-                answer_text = prompt_anthropic(prompt)
+                answer_text = prompt_anthropic(prompt, model)
             except anthropic.InternalServerError:
                 answer_text = "Request failed - Anthropic is broken"
         else:
@@ -56,9 +72,9 @@ def main(prompt: str):
     print(answer)
 
 
-def prompt_anthropic(prompt: str):
+def prompt_anthropic(prompt: str, model: str):
     message = anthropic_client.messages.create(
-        model=ANTHROPIC_MODEL,
+        model=model,
         max_tokens=1024,
         messages=[{"role": "user", "content": prompt}],
     )
@@ -74,4 +90,8 @@ def prompt_gpt(prompt: str):
 
 if __name__ == "__main__":
     prompt = " ".join(sys.argv[1:])
+    if not sys.stdin.isatty():
+        stdin_text = sys.stdin.read()
+        prompt += "\n" + stdin_text
+
     main(prompt)
