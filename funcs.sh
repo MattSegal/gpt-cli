@@ -233,3 +233,25 @@ function mrcheck_help_text {
     echo "  $DIFFCHECK_PREFIX"
     echo ""
 }
+
+function web {
+    if [ -z "$1" ] || [ "$1" == "--help" ]; then
+        web_help_text
+        return
+    fi
+    $GPT_HOME/venv/bin/python $GPT_HOME/web.py $1
+}
+
+function web_help_text {
+    echo ""
+    echo "Try to read text from a website."
+    echo "Usage:"
+    echo ""
+    echo "  web http://example.com  # Read text from example.com"
+    echo "  web --help              # Print this message"
+    echo ""
+    echo "Suggested usage:"
+    echo ""
+    echo "  web http://example.com | gpt summarise the contents of this website"
+    echo ""
+}

@@ -10,6 +10,7 @@
 - diffcheck: Check your git diff for errors or mistakes (requires git)
 - commitmsg: Write a commit message for your git diff (requires git)
 - mrcheck: Check your gitlab merge request diff for errors or mistakes (requires glab)
+- web: Read text from a webpage (can be piped into gpt)
 
 [OpenAI Pricing](https://openai.com/pricing):
 
@@ -54,4 +55,5 @@ pex --help  # xclip required
 diffcheck --help  # git required
 commitmsg --help  # git required
 mrcheck --help  # glab required
+web --help
 ```
