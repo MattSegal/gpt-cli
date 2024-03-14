@@ -239,7 +239,7 @@ function web {
         web_help_text
         return
     fi
-    $GPT_HOME/venv/bin/python $GPT_HOME/web.py $1
+    $GPT_HOME/venv/bin/python $GPT_HOME/web.py $@
 }
 
 function web_help_text {
@@ -247,8 +247,9 @@ function web_help_text {
     echo "Try to read text from a website."
     echo "Usage:"
     echo ""
-    echo "  web http://example.com  # Read text from example.com"
-    echo "  web --help              # Print this message"
+    echo "  web http://example.com                      # Read text from example.com"
+    echo "  web http://example.com http://other.com     # Read text from example.com and other.com"
+    echo "  web --help                                  # Print this message"
     echo ""
     echo "Suggested usage:"
     echo ""

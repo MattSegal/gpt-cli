@@ -12,7 +12,12 @@ REQUESTS_HEADERS = {
 }
 
 
-def main(url: str):
+def main(urls: str):
+    for url in urls:
+        print_url(url)
+
+
+def print_url(url: str):
     resp = requests.get(url, timeout=30, headers=REQUESTS_HEADERS)
     try:
         resp.raise_for_status()
@@ -34,5 +39,5 @@ def main(url: str):
 
 
 if __name__ == "__main__":
-    url = sys.argv[1]
-    main(url)
+    urls = sys.argv[1:]
+    main(urls)
