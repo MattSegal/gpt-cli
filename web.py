@@ -33,6 +33,7 @@ def main(urls: str):
 
 def print_url(url: str):
     domain = urlparse(url).netloc
+    # DM https://twitter.com/mattdsegal for code to transcribe youtube videos.
     if domain in YOUTUBE_DOMAINS and IS_MODAL_ENABLED:
         transcribe_youtube_video(url)
         return
