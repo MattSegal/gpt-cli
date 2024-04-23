@@ -48,12 +48,13 @@ def main(prompt: str):
         print("No prompt provided")
         return
 
+    prompt = prompt.replace("--nano", "")
     with Progress(transient=True) as progress:
         if ANTHROPIC_KEY_EXISTS:
             model = ANTHROPIC_MODEL
             model_name = "Claude 3"
             for model_key, model_id in model_options.items():
-                if prompt.startswith(f"--{model_key}"):
+                if f"--{model_key}" in prompt:
                     model = model_id
                     model_name = f"Claude 3 ({model_key})"
                     prompt = prompt.replace(f"--{model_key}", "")
@@ -62,7 +63,7 @@ def main(prompt: str):
             progress.add_task(f"[red]Asking {model_name}...", start=False, total=None)
             try:
                 answer_text = prompt_anthropic(prompt, model)
-            except anthropic.InternalServerError:
+            except anthropic.InternalServerError as e:
                 answer_text = "Request failed - Anthropic is broken"
         else:
             progress.add_task("[red]Asking GPT-4...", start=False, total=None)

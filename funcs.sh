@@ -11,6 +11,7 @@ function dalle {
     TEMPFILE=$(mktemp)
     $GPT_HOME/venv/bin/python $GPT_HOME/dalle.py $TEMPFILE "$DALLE_PROMPT"
     IMAGE_URL=$(cat $TEMPFILE)
+    rm -f $TEMPFILE
     URL_REGEX='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
     if [[ $IMAGE_URL =~ $URL_REGEX && $DALLE_IMAGE_OPENER ]]; then
         echo "Opening generated image with $DALLE_IMAGE_OPENER"
@@ -40,7 +41,16 @@ function gpt {
         gpt_help_text
         return
     fi
+    if [[ "$*" == *"--nano"* ]]; then
+        TEMPFILE=$(mktemp)
+        nano $TEMPFILE
+        NANO_TEXT=$(cat $TEMPFILE)
+        GPT_PROMPT="$GPT_PROMPT\n$NANO_TEXT"
+    fi
     $GPT_HOME/venv/bin/python $GPT_HOME/gpt.py "$GPT_PROMPT"
+    if [[ "$*" == *"--nano"* ]]; then
+        rm -f $TEMPFILE
+    fi
 }
 
 function gpt_help_text {
@@ -50,6 +60,8 @@ function gpt_help_text {
     echo "  gpt how do I flatten a list in python"
     echo "  gpt ffmpeg convert webm to a gif"
     echo "  gpt what is the best restaurant in melbourne"
+    echo "  echo 'hello world' | gpt what does this text say"
+    echo "  gpt --nano # Incompatible with pipes"
     echo ""
 }
 

@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from trafilatura import extract
 from pypdf import PdfReader
 import modal
+from rich.progress import Progress
 
 REQUESTS_HEADERS = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36",
@@ -35,8 +36,12 @@ def print_url(url: str):
     domain = urlparse(url).netloc
     # DM https://twitter.com/mattdsegal for code to transcribe youtube videos.
     if domain in YOUTUBE_DOMAINS and IS_MODAL_ENABLED:
-        transcribe_youtube_video(url)
-        return
+        with Progress(transient=True) as progress:
+            progress.add_task(
+                "[red]Transcribing YouTube video...", start=False, total=None
+            )
+            transcribe_youtube_video(url)
+            return
 
     resp = requests.get(url, timeout=30, headers=REQUESTS_HEADERS)
     try:
@@ -68,7 +73,7 @@ def transcribe_youtube_video(url: str) -> dict:
     transcribe_audio = get_function(MODAL_APP, "transcribe_audio")
     download_audio.remote(video_id)
     transcript = transcribe_audio.remote(video_id)
-    print(transcript)
+    print(transcript["text"])
 
 
 @cache
