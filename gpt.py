@@ -31,10 +31,11 @@ class ClaudeModel:
 
 class GPTModel:
     FourTurbo = "gpt-4-1106-preview"
+    FourO = "gpt-4o"
 
 
 ANTHROPIC_MODEL = ClaudeModel.Opus
-GPT_MODEL = GPTModel.FourTurbo
+GPT_MODEL = GPTModel.FourO
 
 model_options = {
     "opus": ClaudeModel.Opus,
@@ -65,9 +66,11 @@ def main(prompt: str):
                 answer_text = prompt_anthropic(prompt, model)
             except anthropic.InternalServerError as e:
                 answer_text = "Request failed - Anthropic is broken"
-        else:
+        elif OPENAI_KEY_EXISTS:
             progress.add_task("[red]Asking GPT-4...", start=False, total=None)
             answer_text = prompt_gpt(prompt)
+        else:
+            raise ValueError("Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars")
 
     answer = Padding(escape(answer_text), (2, 4))
     print(answer)

@@ -1,0 +1,2 @@
+- save previous results somehow to have extended conversations?
+- index folders / RAG on disk
