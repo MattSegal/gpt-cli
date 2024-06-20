@@ -25,7 +25,7 @@ if not (openai_client or anthropic_client):
 
 class ClaudeModel:
     Opus = "claude-3-opus-20240229"
-    Sonnet = "claude-3-sonnet-20240229"
+    Sonnet = "claude-3-5-sonnet-20240620"
     Haiku = "claude-3-haiku-20240307"
 
 
@@ -34,7 +34,7 @@ class GPTModel:
     FourO = "gpt-4o"
 
 
-ANTHROPIC_MODEL = ClaudeModel.Opus
+ANTHROPIC_MODEL = ClaudeModel.Sonnet
 GPT_MODEL = GPTModel.FourO
 
 model_options = {

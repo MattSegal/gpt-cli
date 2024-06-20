@@ -65,6 +65,8 @@ function gpt_help_text {
     echo ""
 }
 
+alias chat=gpt
+
 PEX_PREFIX="as an expert, please explain technical terms and jargon here in precise detail, one by one in a list, assuming a sophisticated audience:"
 
 function pex {
