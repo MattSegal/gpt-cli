@@ -37,7 +37,7 @@ function gpt {
         return
     fi
     GPT_PROMPT="$@"
-    if [ -z "$GPT_PROMPT" ] || [ "$1" == "--help" ]; then
+    if [ -z "$GPT_PROMPT" ] || [[ "$1" == "--help" ]]; then
         gpt_help_text
         return
     fi
