@@ -31,11 +31,12 @@ class ClaudeModel:
 
 class GPTModel:
     FourTurbo = "gpt-4-1106-preview"
-    FourO = "gpt-4o"
+    FourOh = "gpt-4o"
+    FourOhMini = "gpt-4o-mini"
 
 
 ANTHROPIC_MODEL = ClaudeModel.Sonnet
-GPT_MODEL = GPTModel.FourO
+GPT_MODEL = GPTModel.FourOhMini
 
 model_options = {
     "opus": ClaudeModel.Opus,
@@ -51,7 +52,10 @@ def main(prompt: str):
 
     prompt = prompt.replace("--nano", "")
     with Progress(transient=True) as progress:
-        if ANTHROPIC_KEY_EXISTS:
+        if OPENAI_KEY_EXISTS:
+            progress.add_task("[red]Asking GPT-4...", start=False, total=None)
+            answer_text = prompt_gpt(prompt)
+        elif ANTHROPIC_KEY_EXISTS:
             model = ANTHROPIC_MODEL
             model_name = "Claude 3"
             for model_key, model_id in model_options.items():
@@ -66,9 +70,6 @@ def main(prompt: str):
                 answer_text = prompt_anthropic(prompt, model)
             except anthropic.InternalServerError as e:
                 answer_text = "Request failed - Anthropic is broken"
-        elif OPENAI_KEY_EXISTS:
-            progress.add_task("[red]Asking GPT-4...", start=False, total=None)
-            answer_text = prompt_gpt(prompt)
         else:
             raise ValueError("Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars")
 
