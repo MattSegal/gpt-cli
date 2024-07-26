@@ -210,13 +210,13 @@ function mrcheck {
         fi
         read -r -d '' GPT_PROMPT <<EOF
 Your task is:
-- Review the code changes and provide feedback.
-- If there are any bugs, highlight them.
-- Provide details on missed use of best-practices.
-- Does the code do what it says in the commit messages?
-- Do not highlight minor issues and nitpicks.
-- Use bullet points if you have multiple comments.
-- Provide security recommendations if there are any.
+- Review the code changes and provide feedback
+- Highlight any bugs or gross coding errors
+- Highlight any obvious security flaws
+- Do not highlight minor issues and nitpicks
+- Use bullet points if you have multiple comments
+
+The main goal here is to make sure there aren't any mistakes
 
 $@
 
