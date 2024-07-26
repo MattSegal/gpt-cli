@@ -190,20 +190,21 @@ function commitmsg_help_text {
 }
 
 function mrcheck {
-    if [ -z "$GPT_HOME" ]; then
+    if [[ -z "$GPT_HOME" ]]; then
         echo "GPT_HOME not set"
         return
     fi
-    if [ -z $(which glab) ]; then
-        echo "glab is not installed"
-        return
-    fi
+    # if [ -z $(which glab) ]; then
+    #     echo "glab is not installed"
+    #     DIFF=$(glab mr diff $BRANCH_NAME)
+    #     return
+    # fi
 
     if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-        echo "Pulling diff from gitlab..."
-        DIFF=$(glab mr diff $BRANCH_NAME)
-        if [ -z "$DIFF" ] || [ "$1" == "--help" ]; then
+        echo "Pulling diff from github for branch $BRANCH_NAME..."
+        DIFF=$(gh pr diff $BRANCH_NAME)
+        if [[ -z "$DIFF" ]] || [[ "$1" == "--help" ]]; then
             mrcheck_help_text
             return
         fi
