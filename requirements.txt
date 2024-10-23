@@ -7,3 +7,6 @@ html5lib==1.1
 pypdf==4.1.0
 modal==0.61.45
 lxml_html_clean
+anthropic
+click
+textual
