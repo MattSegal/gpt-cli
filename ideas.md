@@ -1,2 +1,9 @@
-- save previous results somehow to have extended conversations?
+- configure command for envars etc
+    - api keys
+    - models
+    - directories to save things
+- pip install
+- chat history / iterated conversations
+- ability to run commands with supervision
 - index folders / RAG on disk
+- siglip based image embeddings

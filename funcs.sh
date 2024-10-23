@@ -1,3 +1,8 @@
+if [ ! -z "${GPT_HOME}" ]; then
+    export PYTHONPATH="${GPT_HOME}:${PYTHONPATH}"
+fi
+
+
 function dalle {
     if [ -z "${GPT_HOME}" ]; then
         echo "GPT_HOME not set"
@@ -9,7 +14,7 @@ function dalle {
         return 0
     fi
     TEMPFILE=$(mktemp)
-    "${GPT_HOME}/venv/bin/python" "${GPT_HOME}/dalle.py" "${TEMPFILE}" "${DALLE_PROMPT}"
+    "${GPT_HOME}/venv/bin/python" -m gpt image "${TEMPFILE}" "${DALLE_PROMPT}"
     IMAGE_URL=$(cat "${TEMPFILE}")
     rm -f "${TEMPFILE}"
     URL_REGEX='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
@@ -48,8 +53,9 @@ function gpt {
         nano "${TEMPFILE}"
         NANO_TEXT=$(cat "${TEMPFILE}")
         GPT_PROMPT="${GPT_PROMPT}"$'\n'"${NANO_TEXT}"
+        GPT_PROMPT=$(echo "${GPT_PROMPT}" | sed 's/--nano//g')
     fi
-    "${GPT_HOME}/venv/bin/python" "${GPT_HOME}/gpt.py" "${GPT_PROMPT}"
+    "${GPT_HOME}/venv/bin/python" -m gpt chat "${GPT_PROMPT}"
     if [[ "${GPT_PROMPT}" == *"--nano"* ]]; then
         rm -f "${TEMPFILE}"
     fi
@@ -97,7 +103,7 @@ function pex {
         return 0
     fi
     GPT_PROMPT="${PEX_PREFIX} ${CLIPBOARD_TEXT}"
-    "${GPT_HOME}/venv/bin/python" "${GPT_HOME}/gpt.py" "${GPT_PROMPT}"
+    "${GPT_HOME}/venv/bin/python" -m gpt chat "${GPT_PROMPT}"
     empty_clipboard
 }
 
@@ -137,7 +143,7 @@ function diffcheck {
             return 0
         fi
         GPT_PROMPT="${DIFFCHECK_PREFIX}"$'\n'"$*"$'\n'"${DIFF}"
-        "${GPT_HOME}/venv/bin/python" "${GPT_HOME}/gpt.py" "${GPT_PROMPT}"
+        "${GPT_HOME}/venv/bin/python" -m gpt chat "${GPT_PROMPT}"
     else
         echo "Not inside a Git repository"
         diffcheck_help_text
@@ -175,7 +181,7 @@ function commitmsg {
             return 0
         fi
         GPT_PROMPT="${COMMITMSG_PREFIX}"$'\n'"$*"$'\n'"${DIFF}"
-        "${GPT_HOME}/venv/bin/python" "${GPT_HOME}/gpt.py" "${GPT_PROMPT}"
+        "${GPT_HOME}/venv/bin/python" -m gpt chat "${GPT_PROMPT}"
     else
         echo "Not inside a Git repository"
         commitmsg_help_text
@@ -237,7 +243,7 @@ ${DIFF}
 All code changes have been provided. Please provide me with your code review based on all the changes
 EOF
 
-        "${GPT_HOME}/venv/bin/python" "${GPT_HOME}/gpt.py" "${GPT_PROMPT}"
+        "${GPT_HOME}/venv/bin/python" -m gpt chat "${GPT_PROMPT}"
     else
         echo "Not inside a Git repository"
         mrcheck_help_text
@@ -266,7 +272,7 @@ function web {
         web_help_text
         return 0
     fi
-    "${GPT_HOME}/venv/bin/python" "${GPT_HOME}/web.py" "$@"
+    "${GPT_HOME}/venv/bin/python" -m gpt scrape "$@"
 }
 
 function web_help_text {
