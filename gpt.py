@@ -25,7 +25,7 @@ if not (openai_client or anthropic_client):
 
 class ClaudeModel:
     Opus = "claude-3-opus-20240229"
-    Sonnet = "claude-3-5-sonnet-20240620"
+    Sonnet = "claude-3-5-sonnet-20241022"
     Haiku = "claude-3-haiku-20240307"
 
 
@@ -52,10 +52,7 @@ def main(prompt: str):
 
     prompt = prompt.replace("--nano", "")
     with Progress(transient=True) as progress:
-        if OPENAI_KEY_EXISTS:
-            progress.add_task("[red]Asking GPT-4...", start=False, total=None)
-            answer_text = prompt_gpt(prompt)
-        elif ANTHROPIC_KEY_EXISTS:
+        if ANTHROPIC_KEY_EXISTS:
             model = ANTHROPIC_MODEL
             model_name = "Claude 3"
             for model_key, model_id in model_options.items():
@@ -70,6 +67,9 @@ def main(prompt: str):
                 answer_text = prompt_anthropic(prompt, model)
             except anthropic.InternalServerError as e:
                 answer_text = "Request failed - Anthropic is broken"
+        elif OPENAI_KEY_EXISTS:
+            progress.add_task("[red]Asking GPT-4...", start=False, total=None)
+            answer_text = prompt_gpt(prompt)
         else:
             raise ValueError("Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars")
 
