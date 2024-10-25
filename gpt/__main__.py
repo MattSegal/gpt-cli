@@ -8,7 +8,7 @@ import click
 
 from .app import ChatApp
 from .web import fetch_text_for_url
-from .settings import OPENAI_API_KEY
+from .settings import OPENAI_API_KEY, ANTHROPIC_API_KEY
 from . import vendors
 
 
@@ -21,7 +21,7 @@ def cli():
 @cli.command()
 @click.argument("urls", nargs=-1)
 @click.option(
-    "--pretty/--no-pretty", default=False, help="Use rich text formatting for output"
+    "--pretty", is_flag=True, default=False, help="Use rich text formatting for output"
 )
 def scrape(urls, pretty):
     """Scrape content from provided URLs"""
@@ -38,16 +38,56 @@ def scrape(urls, pretty):
 
 @cli.command()
 @click.argument("text", nargs=-1, required=False)
-def chat(text: tuple[str, ...]):
-    # Initialize with stdin/argument text if provided
-    initial_text = " ".join(text)
-    if not sys.stdin.isatty():
-        stdin_text = click.get_text_stream("stdin").read()
-        initial_text = f"{initial_text}\n{stdin_text}" if initial_text else stdin_text
+@click.option("--chat", is_flag=True, default=False, help="Use chat UI")
+def chat(text: tuple[str, ...], chat: bool):
+    """
+    Ask GPT or Claude a question. Examples:
 
-    breakpoint()
-    app = ChatApp(initial_text)
-    app.run()
+    \b
+    gpt how do I flatten a list in python
+    gpt ffmpeg convert webm to a gif
+    gpt what is the best restaurant in melbourne
+    echo 'hello world' | gpt what does this text say
+    gpt --nano # Incompatible with pipes
+    gpt --chat # Incompatible with pipes
+    """
+
+    # Initialize with stdin/argument text if provided
+    query_text = " ".join(text)
+    if not chat and not sys.stdin.isatty():
+        stdin_text = click.get_text_stream("stdin").read()
+        query_text = f"{query_text}\n{stdin_text}" if query_text else stdin_text
+
+    # Add this condition to print help when no input is provided
+    if not query_text and not chat:
+        ctx = click.get_current_context()
+        click.echo(ctx.get_help())
+        ctx.exit()
+
+    if chat:
+        app = ChatApp(query_text)
+        app.run()
+    else:
+        if ANTHROPIC_API_KEY:
+            vendor = vendors.anthropic
+        elif OPENAI_API_KEY:
+            vendor = vendors.openai
+        else:
+            print("Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars")
+            sys.exit(1)
+
+        model_option = vendor.DEFAULT_MODEL_OPTION
+        model = vendor.MODEL_OPTIONS[model_option]
+        with Progress(transient=True) as progress:
+            progress.add_task(
+                f"[red]Asking {vendor.MODEL_NAME} {model_option}...",
+                start=False,
+                total=None,
+            )
+            answer_text = vendor.get_chat_completion(query_text, model)
+
+        formatted_text = Padding(escape(answer_text), (1, 2))
+        rich_print(formatted_text)
 
 
 @cli.command()

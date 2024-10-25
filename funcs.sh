@@ -44,10 +44,6 @@ function gpt {
         return 1
     fi
     GPT_PROMPT="$*"
-    if [ -z "${GPT_PROMPT}" ] || [ "$1" = "--help" ]; then
-        gpt_help_text
-        return 0
-    fi
     if [[ "${GPT_PROMPT}" == *"--nano"* ]]; then
         TEMPFILE=$(mktemp)
         nano "${TEMPFILE}"
@@ -61,19 +57,6 @@ function gpt {
     fi
 }
 
-function gpt_help_text {
-    cat << EOF
-
-Ask GPT-4 a question. Usage:
-
-  gpt how do I flatten a list in python
-  gpt ffmpeg convert webm to a gif
-  gpt what is the best restaurant in melbourne
-  echo 'hello world' | gpt what does this text say
-  gpt --nano # Incompatible with pipes
-
-EOF
-}
 
 alias chat=gpt
 

@@ -65,28 +65,28 @@ class ChatApp(App):
         history = self.query_one("#chat-history")
         history.write(f"[bold]You:[/bold] {escape(message)}")
 
-        # # Get AI response
-        # if ANTHROPIC_API_KEY:
-        #     vendor = vendors.anthropic
-        # elif OPENAI_API_KEY:
-        #     vendor = vendors.openai
-        # else:
-        #     history.write(
-        #         "Error: Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars"
-        #     )
-        #     return
+        # Get AI response
+        if ANTHROPIC_API_KEY:
+            vendor = vendors.anthropic
+        elif OPENAI_API_KEY:
+            vendor = vendors.openai
+        else:
+            history.write(
+                "Error: Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars"
+            )
+            return
 
-        # # Show thinking indicator
-        # history.write("[bold red]Thinking...[/bold red]")
+        # Show thinking indicator
+        history.write("[bold red]Thinking...[/bold red]")
 
-        # # Get response from AI
-        # model_option = vendor.DEFAULT_MODEL_OPTION
-        # model = vendor.MODEL_OPTIONS[model_option]
-        # answer_text = vendor.get_chat_completion(message, model)
+        # Get response from AI
+        model_option = vendor.DEFAULT_MODEL_OPTION
+        model = vendor.MODEL_OPTIONS[model_option]
+        answer_text = vendor.get_chat_completion(message, model)
 
-        # # Remove last line (thinking indicator) and show response
-        # history.lines.pop()
-        # history.write(f"[bold]Assistant:[/bold] {answer_text}")
+        # Remove last line (thinking indicator) and show response
+        history.lines.pop()
+        history.write(f"[bold]Assistant:[/bold] {answer_text}")
 
         # Clear input
         input_widget.text = ""
