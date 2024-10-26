@@ -8,3 +8,5 @@
 - index folders / RAG on disk
 - siglip based image embeddings
 - dynamic user defined tasks
+
+- changelog + publush to pypi

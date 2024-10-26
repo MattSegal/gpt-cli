@@ -198,7 +198,7 @@ def config(show_list: bool):
         type=str,
     )
     dalle_opener = click.prompt(
-        "DALL-E image url opener command (press Enter to skip)",
+        "DALL-E image url opener command such as (eg. `google-chrome`) (press Enter to skip)",
         default=config.get("DALLE_IMAGE_OPENER", ""),
         show_default=False,
         type=str,
