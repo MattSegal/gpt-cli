@@ -1,14 +1,19 @@
 import sys
+import subprocess as sp
 
 from rich import print as rich_print
 from rich.padding import Padding
 from rich.markup import escape
 from rich.progress import Progress
+from rich.console import Console
 import click
+from prompt_toolkit import PromptSession
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.key_binding import KeyBindings
 
-from .app import ChatApp
 from .web import fetch_text_for_url
 from .settings import load_settings, CONFIG_DIR, CONFIG_FILE, load_config, save_config
+from .schema import ChatMessage, Role
 from . import vendors
 
 
@@ -34,11 +39,16 @@ class DefaultCommandGroup(click.Group):
 
     def resolve_command(self, ctx, args):
         try:
-            # test if the command parses
+            # Test if the command parses
             return super(DefaultCommandGroup, self).resolve_command(ctx, args)
         except click.UsageError:
-            # command did not parse, assume it is the default command
-            args.insert(0, self.default_command)
+            # Command did not parse, assume it is the default command
+            param_args = []
+            for k, v in ctx.params.items():
+                if v:
+                    param_args.append(f"--{k}")
+
+            args = [self.default_command, *param_args, *args]
             return super(DefaultCommandGroup, self).resolve_command(ctx, args)
 
 
@@ -56,20 +66,15 @@ def cli():
       ask web http://example.com | ask what does this website say
 
     """
-
     pass
 
 
 @cli.command(default_command=True)
 @click.argument("text", nargs=-1, required=False)
-@click.pass_context
-def ask(ctx, text: tuple[str, ...]):
+def default(text: tuple[str, ...]):
     """
     Simple one-off queries with no chat history
     """
-    if ctx.invoked_subcommand is not None:
-        return
-
     settings = load_settings()
 
     # Initialize with stdin/argument text if provided
@@ -78,32 +83,109 @@ def ask(ctx, text: tuple[str, ...]):
         stdin_text = click.get_text_stream("stdin").read()
         query_text = f"{query_text}\n{stdin_text}" if query_text else stdin_text
 
-    # Add this condition to print help when no input is provided
-    if not query_text:
-        ctx = click.get_current_context()
-        click.echo(ctx.get_help())
-        ctx.exit()
-
     if settings.ANTHROPIC_API_KEY:
         vendor = vendors.anthropic
     elif settings.OPENAI_API_KEY:
         vendor = vendors.openai
     else:
-        print("Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars")
-        sys.exit(1)
+        raise click.ClickException("Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars")
 
     model_option = vendor.DEFAULT_MODEL_OPTION
     model = vendor.MODEL_OPTIONS[model_option]
+
+    console = Console(width=100)
+    # User asks a single questions
     with Progress(transient=True) as progress:
         progress.add_task(
             f"[red]Asking {vendor.MODEL_NAME} {model_option}...",
             start=False,
             total=None,
         )
-        answer_text = vendor.get_chat_completion(query_text, model)
+        answer_text = vendor.answer_query(query_text, model)
 
     formatted_text = Padding(escape(answer_text), (1, 2))
-    rich_print(formatted_text)
+    console.print(formatted_text)
+
+
+@cli.command()
+@click.argument("text", nargs=-1, required=False)
+def chat(text: tuple[str, ...]):
+    """
+    Continue chat after initial ask
+    """
+    settings = load_settings()
+
+    # Initialize with stdin/argument text if provided
+    query_text = " ".join(text)
+    if not sys.stdin.isatty():
+        stdin_text = click.get_text_stream("stdin").read()
+        query_text = f"{query_text}\n{stdin_text}" if query_text else stdin_text
+        # Reopen stdin for interactive input
+        sys.stdin = open("/dev/tty")
+
+    if settings.ANTHROPIC_API_KEY:
+        vendor = vendors.anthropic
+    elif settings.OPENAI_API_KEY:
+        vendor = vendors.openai
+    else:
+        raise click.ClickException("Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars")
+
+    model_option = vendor.DEFAULT_MODEL_OPTION
+    model = vendor.MODEL_OPTIONS[model_option]
+
+    console = Console(width=100)
+    console.print(f"[green]Chatting with {vendor.MODEL_NAME} {model_option} (quit with CTRL-C)")
+    if query_text:
+        console.print(f"\nYou:", escape(query_text), "\n")
+        messages = [ChatMessage(role=Role.User, content=query_text)]
+    else:
+        messages = []
+
+    while True:
+        if messages:
+            with Progress(transient=True) as progress:
+                progress.add_task(
+                    f"[red]Asking {vendor.MODEL_NAME} {model_option}...",
+                    start=False,
+                    total=None,
+                )
+                message = vendor.chat(messages, model)
+
+            messages.append(message)
+            console.print(f"Assistant:")
+            formatted_text = Padding(escape(message.content), (1, 2))
+            console.print(formatted_text, width=80)
+
+            console.print("-" * console.width, style="dim")
+
+        try:
+            kb = KeyBindings()
+
+            @kb.add("c-m")  # Changed from 'c-enter' to 'c-m'
+            def _(event):
+                """Submit on ctrl+enter"""
+                event.current_buffer.validate_and_handle()
+
+            @kb.add("enter")
+            def _(event):
+                """Insert newline on enter"""
+                event.current_buffer.insert_text("\n")
+
+            # Initialize prompt session with custom keybindings
+            session = PromptSession(key_bindings=kb)
+
+            line = session.prompt("\nYou: ", multiline=True, key_bindings=kb)
+
+            if line.strip() == r"\q":
+                query_text = r"\q"
+                break
+
+            query_text = line
+            messages.append(ChatMessage(role=Role.User, content=query_text))
+
+        except (KeyboardInterrupt, click.exceptions.Abort):
+            console.print("\n\nAssistant: Bye 👋")
+            break
 
 
 @cli.command()
@@ -125,42 +207,35 @@ def web(urls, pretty):
 
 
 @cli.command()
-@click.argument("text", nargs=-1, required=False)
-def ui(text: tuple[str, ...]):
-    """Chat via a terminal UI"""
-    # Initialize with stdin/argument text if provided
-    query_text = " ".join(text)
-    app = ChatApp(query_text)
-    app.run()
-
-
-@cli.command()
-@click.argument("filename", type=click.Path(writable=True), required=True)
 @click.argument("text", nargs=-1, required=True)
-def img(filename: str, text: tuple[str, ...]):
+def img(text: tuple[str, ...]):
     """
-    Render an image with Dalle-3
+    Render an image with DALLE-3
+
+    \b
+    ask img the best hamburger ever
+    ask img a skier doing a backflip high quality photorealistic
+    ask img an oil painting of the best restaurant in melbourne
     """
     prompt = " ".join(text)
-    if not filename:
-        print("No output filename provided")
-        return
-
     if not prompt:
         print("No prompt provided")
-        return
+        raise click.ClickException("No prompt provided")
 
     settings = load_settings()
     if not settings.OPENAI_API_KEY:
-        print("Set the OPENAI_API_KEY envar")
-        sys.exit(1)
+        raise click.ClickException("Set the OPENAI_API_KEY envar")
+
+    if not settings.DALLE_IMAGE_OPENER:
+        raise click.ClickException("Set the DALLE_IMAGE_OPENER envar")
 
     with Progress(transient=True) as progress:
         progress.add_task("[red]Asking DALL-E...", start=False, total=None)
         image_url = vendors.openai.get_image_url(prompt)
 
-    with open(filename, "w") as f:
-        f.write(image_url)
+    # Open the image URL using the configured opener command
+    opener_cmd = settings.DALLE_IMAGE_OPENER.replace("\\", "")
+    sp.run([opener_cmd, image_url])
 
 
 @cli.command()
@@ -212,8 +287,4 @@ def config(show_list: bool):
     if dalle_opener:
         config["DALLE_IMAGE_OPENER"] = dalle_opener
 
-    save_config(config)
-
-
-if __name__ == "__main__":
-    cli()
+    save_config(config)  #

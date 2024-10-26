@@ -1,19 +1,15 @@
-[tool.black]
-line-length = 100
-target-version = ['py310']
-
-[tool.poetry.scripts]
-ask = "ask.__main__:cli"
-
-[tool.isort]
-known_first_party = ["ask"]
-profile = "black"
 
 [tool.poetry]
 name = "ask"
 version = "0.0.1"
 description = ""
 authors = ["Matthew Segal <mattdsegal@gmail.com>"]
+packages = [
+    { include = "src" }
+]
+
+[tool.poetry.scripts]
+ask = "src.cli:cli"
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -27,5 +23,13 @@ pypdf = "^5.0.1"
 lxml-html-clean = "^0.3.1"
 anthropic = "^0.37.1"
 click = "^8.1.7"
-textual = "^0.85.0"
 pydantic-settings = "^2.6.0"
+prompt-toolkit = "^3.0.48"
+
+[tool.isort]
+known_first_party = ["src"]
+profile = "black"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
