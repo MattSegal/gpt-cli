@@ -7,3 +7,4 @@
 - ability to run commands with supervision
 - index folders / RAG on disk
 - siglip based image embeddings
+- dynamic user defined tasks

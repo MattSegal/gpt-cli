@@ -1,6 +1,3 @@
-if [ ! -z "${GPT_HOME}" ]; then
-    export PYTHONPATH="${GPT_HOME}:${PYTHONPATH}"
-fi
 
 
 function dalle {
@@ -38,27 +35,7 @@ Ask DALL-E-3 to generate an image. Usage:
 EOF
 }
 
-function gpt {
-    if [ -z "${GPT_HOME}" ]; then
-        echo "GPT_HOME not set"
-        return 1
-    fi
-    GPT_PROMPT="$*"
-    if [[ "${GPT_PROMPT}" == *"--nano"* ]]; then
-        TEMPFILE=$(mktemp)
-        nano "${TEMPFILE}"
-        NANO_TEXT=$(cat "${TEMPFILE}")
-        GPT_PROMPT="${GPT_PROMPT}"$'\n'"${NANO_TEXT}"
-        GPT_PROMPT=$(echo "${GPT_PROMPT}" | sed 's/--nano//g')
-    fi
-    "${GPT_HOME}/venv/bin/python" -m gpt chat "${GPT_PROMPT}"
-    if [[ "${GPT_PROMPT}" == *"--nano"* ]]; then
-        rm -f "${TEMPFILE}"
-    fi
-}
 
-
-alias chat=gpt
 
 PEX_PREFIX="as an expert, please explain technical terms and jargon here in precise detail, one by one in a list, assuming a sophisticated audience:"
 

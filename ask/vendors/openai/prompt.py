@@ -3,7 +3,7 @@ from functools import cache
 from openai import OpenAI
 
 
-from gpt.settings import OPENAI_API_KEY
+from ask.settings import load_settings
 
 
 def get_chat_completion(prompt: str, model: str) -> str:
@@ -16,4 +16,5 @@ def get_chat_completion(prompt: str, model: str) -> str:
 
 @cache
 def get_client():
-    return OpenAI(api_key=OPENAI_API_KEY)
+    settings = load_settings()
+    return OpenAI(api_key=settings.OPENAI_API_KEY)

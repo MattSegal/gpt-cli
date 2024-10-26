@@ -4,7 +4,7 @@ from textual.containers import ScrollableContainer
 from textual.widgets import Header, Footer, TextArea, RichLog
 from textual.binding import Binding
 
-from .settings import ANTHROPIC_API_KEY, OPENAI_API_KEY
+from .settings import load_settings
 from . import vendors
 
 
@@ -43,6 +43,7 @@ class ChatApp(App):
     def __init__(self, initial_text: str = ""):
         super().__init__()
         self.initial_text = initial_text
+        self.settings = load_settings()
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -66,14 +67,12 @@ class ChatApp(App):
         history.write(f"[bold]You:[/bold] {escape(message)}")
 
         # Get AI response
-        if ANTHROPIC_API_KEY:
+        if self.settings.ANTHROPIC_API_KEY:
             vendor = vendors.anthropic
-        elif OPENAI_API_KEY:
+        elif self.settings.OPENAI_API_KEY:
             vendor = vendors.openai
         else:
-            history.write(
-                "Error: Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars"
-            )
+            history.write("Error: Set either ANTHROPIC_API_KEY or OPENAI_API_KEY as envars")
             return
 
         # Show thinking indicator

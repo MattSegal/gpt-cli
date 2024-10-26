@@ -1,0 +1,31 @@
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.poetry.scripts]
+ask = "ask.__main__:cli"
+
+[tool.isort]
+known_first_party = ["ask"]
+profile = "black"
+
+[tool.poetry]
+name = "ask"
+version = "0.0.1"
+description = ""
+authors = ["Matthew Segal <mattdsegal@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+openai = "^1.52.2"
+rich = "^13.9.3"
+requests = "^2.32.3"
+trafilatura = "^1.12.2"
+beautifulsoup4 = "^4.12.3"
+html5lib = "^1.1"
+pypdf = "^5.0.1"
+lxml-html-clean = "^0.3.1"
+anthropic = "^0.37.1"
+click = "^8.1.7"
+textual = "^0.85.0"
+pydantic-settings = "^2.6.0"
