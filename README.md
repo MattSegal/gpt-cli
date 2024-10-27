@@ -29,7 +29,20 @@ Note: GIF is out of date
 
 ![](./gpt.gif)
 
-## Local setup
+## Global setup
+
+Get access to binary everywhere
+
+```bash
+python -m venv venv
+. ./venv/bin/activate
+pip install poetry
+poetry build
+deactivate
+pip install --user --upgrade --force-reinstall dist/*.whl
+```
+
+## Dev setup
 
 Install project requirements:
 
