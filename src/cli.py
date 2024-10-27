@@ -181,9 +181,18 @@ def chat(text: tuple[str, ...]):
                     url = query_text[5:].strip()
                     url_text = fetch_text_for_url(url)
                     console.print(f"\n[bold blue]Content from {url}:[/bold blue]")
-                    formatted_text = Padding(escape(url_text), (1, 2))
+                    max_char = 512
+                    if len(url_text) > max_char:
+                        url_text_display = url_text[:512] + "..."
+                    else:
+                        url_text_display = url_text
+
+                    formatted_text = Padding(escape(url_text_display), (1, 2))
                     console.print(formatted_text)
-                    query_text = f"Content from {url}:\n\n{url_text}"
+                    url_text_length = len(url_text)
+                    query_text = (
+                        f"Content from {url} ({url_text_length} chars total):\n\n{url_text}"
+                    )
                     messages.append(ChatMessage(role=Role.User, content=query_text))
                     query_text = ""
                     continue
