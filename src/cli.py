@@ -197,6 +197,38 @@ def chat(text: tuple[str, ...]):
                     query_text = ""
                     continue
 
+                if query_text.startswith(r"\file "):
+                    file_path = query_text[6:].strip()
+                    try:
+                        with open(file_path, "r") as file:
+                            file_content = file.read()
+                        console.print(f"\n[bold blue]Content from {file_path}:[/bold blue]")
+                        max_char = 512
+                        if len(file_content) > max_char:
+                            file_content_display = file_content[:512] + "..."
+                        else:
+                            file_content_display = file_content
+
+                        formatted_text = Padding(escape(file_content_display), (1, 2))
+                        console.print(formatted_text)
+                        file_content_length = len(file_content)
+                        query_text = f"Content from {file_path} ({file_content_length} chars total):\n\n{file_content}"
+                        messages.append(ChatMessage(role=Role.User, content=query_text))
+                        query_text = ""
+                        continue
+                    except FileNotFoundError:
+                        console.print(
+                            f"\n[bold red]Error: File '{file_path}' not found.[/bold red]"
+                        )
+                        query_text = ""
+                        continue
+                    except IOError:
+                        console.print(
+                            f"\n[bold red]Error: Unable to read file '{file_path}'.[/bold red]"
+                        )
+                        query_text = ""
+                        continue
+
                 if query_text == r"\c":
                     messages = []
                     console.print("\n[bold green]Chat history cleared.[/bold green]")
@@ -222,6 +254,7 @@ HELP_OPTIONS = {
     "quit": "CTRL-C or \q",
     "clear chat": "\c",
     "newline": "CTRL-J",
+    "read file": "\\file /etc/hosts",
     "fetch web text": "\web example.com",
     "help": "\h",
 }
