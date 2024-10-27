@@ -13,6 +13,9 @@ REQUESTS_HEADERS = {
 
 
 def fetch_text_for_url(url: str) -> str | None:
+    if not url.startswith(("http://", "https://")):
+        url = "http://" + url
+
     resp = requests.get(url, timeout=30, headers=REQUESTS_HEADERS)
     try:
         resp.raise_for_status()

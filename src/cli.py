@@ -1,20 +1,21 @@
 import sys
 import subprocess as sp
 
+import click
 from rich import print as rich_print
 from rich.padding import Padding
 from rich.markup import escape
 from rich.progress import Progress
 from rich.console import Console
-import click
 from prompt_toolkit import PromptSession
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding import KeyBindings
 
 from .web import fetch_text_for_url
 from .settings import load_settings, CONFIG_DIR, CONFIG_FILE, load_config, save_config
 from .schema import ChatMessage, Role
 from . import vendors
+
+console = Console(width=100)
 
 
 class DefaultCommandGroup(click.Group):
@@ -93,7 +94,6 @@ def default(text: tuple[str, ...]):
     model_option = vendor.DEFAULT_MODEL_OPTION
     model = vendor.MODEL_OPTIONS[model_option]
 
-    console = Console(width=100)
     # User asks a single questions
     with Progress(transient=True) as progress:
         progress.add_task(
@@ -112,17 +112,17 @@ def default(text: tuple[str, ...]):
 def chat(text: tuple[str, ...]):
     """
     Continue chat after initial ask
+
+    \b
+    Examples:
+      ask chat
+      ask chat how do I flatten a list in python
+
     """
     settings = load_settings()
 
     # Initialize with stdin/argument text if provided
     query_text = " ".join(text)
-    if not sys.stdin.isatty():
-        stdin_text = click.get_text_stream("stdin").read()
-        query_text = f"{query_text}\n{stdin_text}" if query_text else stdin_text
-        # Reopen stdin for interactive input
-        sys.stdin = open("/dev/tty")
-
     if settings.ANTHROPIC_API_KEY:
         vendor = vendors.anthropic
     elif settings.OPENAI_API_KEY:
@@ -132,9 +132,9 @@ def chat(text: tuple[str, ...]):
 
     model_option = vendor.DEFAULT_MODEL_OPTION
     model = vendor.MODEL_OPTIONS[model_option]
+    console.print(f"[green]Chatting with {vendor.MODEL_NAME} {model_option}")
+    print_help()
 
-    console = Console(width=100)
-    console.print(f"[green]Chatting with {vendor.MODEL_NAME} {model_option} (quit with CTRL-C)")
     if query_text:
         console.print(f"\nYou:", escape(query_text), "\n")
         messages = [ChatMessage(role=Role.User, content=query_text)]
@@ -155,37 +155,76 @@ def chat(text: tuple[str, ...]):
             console.print(f"Assistant:")
             formatted_text = Padding(escape(message.content), (1, 2))
             console.print(formatted_text, width=80)
-
             console.print("-" * console.width, style="dim")
 
         try:
             kb = KeyBindings()
 
-            @kb.add("c-m")  # Changed from 'c-enter' to 'c-m'
-            def _(event):
-                """Submit on ctrl+enter"""
-                event.current_buffer.validate_and_handle()
-
             @kb.add("enter")
             def _(event):
-                """Insert newline on enter"""
+                """Submit on any enter press"""
+                buf = event.current_buffer
+                buf.validate_and_handle()
+
+            @kb.add("c-j")
+            def _(event):
+                """Insert a newline character on Ctrl+J"""
                 event.current_buffer.insert_text("\n")
 
-            # Initialize prompt session with custom keybindings
-            session = PromptSession(key_bindings=kb)
+            query_text = ""
+            while not query_text:
+                session = PromptSession(key_bindings=kb)
+                query_text = session.prompt("\nYou: ", multiline=True, key_bindings=kb)
+                query_text = query_text.strip()
 
-            line = session.prompt("\nYou: ", multiline=True, key_bindings=kb)
+                if query_text.startswith(r"\web "):
+                    url = query_text[5:].strip()
+                    url_text = fetch_text_for_url(url)
+                    console.print(f"\n[bold blue]Content from {url}:[/bold blue]")
+                    formatted_text = Padding(escape(url_text), (1, 2))
+                    console.print(formatted_text)
+                    query_text = f"Content from {url}:\n\n{url_text}"
+                    messages.append(ChatMessage(role=Role.User, content=query_text))
+                    query_text = ""
+                    continue
 
-            if line.strip() == r"\q":
-                query_text = r"\q"
-                break
+                if query_text == r"\c":
+                    messages = []
+                    console.print("\n[bold green]Chat history cleared.[/bold green]")
+                    query_text = ""
+                    continue
 
-            query_text = line
+                if query_text == r"\h":
+                    print_help()
+                    query_text = ""
+                    continue
+                if query_text == r"\q":
+                    console.print("\n\nAssistant: Bye 👋")
+                    return
+
             messages.append(ChatMessage(role=Role.User, content=query_text))
 
         except (KeyboardInterrupt, click.exceptions.Abort):
             console.print("\n\nAssistant: Bye 👋")
-            break
+            return
+
+
+HELP_OPTIONS = {
+    "quit": "CTRL-C or \q",
+    "clear chat": "\c",
+    "newline": "CTRL-J",
+    "fetch web text": "\web example.com",
+    "help": "\h",
+}
+
+
+def print_help():
+    max_key_length = max(len(key) for key in HELP_OPTIONS)
+    help_text = [
+        f"[green]{key.ljust(max_key_length)}:  {value}" for key, value in HELP_OPTIONS.items()
+    ]
+    formatted_text = Padding("\n".join(help_text), (1, 2))
+    console.print(formatted_text)
 
 
 @cli.command()
