@@ -19,9 +19,9 @@ Options:
 
 Commands:
   <default>  Simple one-off queries with no chat history
+  chat       Continue chat after initial ask
   config     Set up or configure this tool
-  img        Render an image with Dalle-3
-  ui         Chat via a terminal UI
+  img        Render an image with DALLE-3
   web        Scrape content from provided URLs (HTML, PDFs)
 ```
 
