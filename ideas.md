@@ -9,6 +9,8 @@
 
 - cost tracking of user queries
 
+- summarise / compress long text after it falls behind some # messages? or after total tokens reaches max limit?
+
 commands
 
 
@@ -22,3 +24,9 @@ done
 
 \tasks  list all tasks
 \task   execute a particular task with a prompt
+
+
+task
+    - scrape these news websites
+    - get articles from each category
+    - allow user to see the news (news summary?)
