@@ -294,8 +294,9 @@ def extract_shell_command(assistant_message: str, vendor, model_option: str) -> 
 
 
 HELP_OPTIONS = {
-    "quit": "CTRL-C or \q",
+    "submit": "Enter",
     "newline": "CTRL-J",
+    "quit": "CTRL-C or \q",
     "clear chat": "\c",
     "shell access": "\shell how much free disk space do I have",
     "read file": "\\file /etc/hosts",

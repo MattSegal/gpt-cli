@@ -1,5 +1,6 @@
 import json
 from io import BytesIO
+from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -13,14 +14,25 @@ REQUESTS_HEADERS = {
 
 
 def fetch_text_for_url(url: str) -> str | None:
+    # Validate URL format
     if not url.startswith(("http://", "https://")):
         url = "http://" + url
 
-    resp = requests.get(url, timeout=30, headers=REQUESTS_HEADERS)
+    parsed_url = urlparse(url)
+    if not all([parsed_url.scheme, parsed_url.netloc]):
+        return "Error: Invalid URL format. Please provide a valid URL (e.g., http://example.com)"
+
     try:
+        resp = requests.get(url, timeout=30, headers=REQUESTS_HEADERS)
         resp.raise_for_status()
-    except (requests.HTTPError, requests.Timeout):
-        return None
+    except requests.ConnectionError:
+        return "Error: Could not connect to the server. Please check if the URL is correct and the server is accessible."
+    except requests.Timeout:
+        return "Error: The request timed out. Please try again later."
+    except requests.HTTPError as e:
+        return f"Error: HTTP {e.response.status_code} - Failed to fetch the page"
+    except Exception as e:
+        return f"Error: An unexpected error occurred: {str(e)}"
 
     if resp.headers["content-type"] == "application/pdf":
         buffer = BytesIO(resp.content)
