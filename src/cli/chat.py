@@ -154,6 +154,7 @@ def run_shell_query(query_text: str, messages: list[ChatMessage], vendor, model_
     system_info = get_system_info()
     shell_instruction = f"""
     Write a single shell command to help the user achieve this goal in the context of this chat: {goal}
+    Do not suggest shell commands that require interactive or TTY mode: these commands get run in a non-interactive subprocess.
     Include a brief explanation (1-2 sentences) of why you chose this shell command, but keep the explanation clearly separated from the command.
     Structure your response so that you start with the explanation and emit the shell command at the end.
     System info (take this into consideration):

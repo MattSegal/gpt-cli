@@ -8,6 +8,12 @@
 - cost tracking of user queries
 
 
+- shell commands over ssh session
+    /shell enable
+    /ssh enable qsqws
+    /ssh disable
+    /shell disable
+
 \agent  use all available commands to complete a task
 \tasks  list all tasks
 \task   execute a particular task with a prompt
