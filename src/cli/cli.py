@@ -48,6 +48,7 @@ def cli():
       ask what is the best restaurant in melbourne
       echo 'hello world' | ask what does this text say
       ask web http://example.com | ask what does this website say
+      ask chat
 
     """
     pass
