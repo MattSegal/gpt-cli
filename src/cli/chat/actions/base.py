@@ -1,6 +1,6 @@
 from rich.console import Console
 
-from src.schema import ChatMessage
+from src.schema import ChatState
 
 
 class BaseAction:
@@ -14,5 +14,5 @@ class BaseAction:
     def is_match(self, query_text: str) -> bool:
         raise NotImplementedError()
 
-    def run(self, query_text: str, messages: list[ChatMessage]) -> list[ChatMessage]:
+    def run(self, query_text: str, state: ChatState) -> ChatState:
         raise NotImplementedError()

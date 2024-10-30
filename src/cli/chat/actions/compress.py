@@ -1,7 +1,7 @@
 from rich.console import Console
 from rich.progress import Progress
 
-from src.schema import ChatMessage, Role
+from src.schema import ChatState, ChatMessage, Role
 from .base import BaseAction
 
 
@@ -21,12 +21,12 @@ class CompressHistoryAction(BaseAction):
     def is_match(self, query_text: str) -> bool:
         return query_text.startswith("\\compress")
 
-    def run(self, query_text: str, messages: list[ChatMessage]) -> list[ChatMessage]:
+    def run(self, query_text: str, state: list[ChatState]) -> list[ChatState]:
         model = self.vendor.MODEL_OPTIONS[self.model_option]
         new_messages = []
         with Progress(transient=True) as progress:
-            task = progress.add_task("[red]Compressing chat history...", total=len(messages))
-            for old_message in messages:
+            task = progress.add_task("[red]Compressing chat history...", total=len(state.messages))
+            for old_message in state.messages:
                 if len(old_message.content) < COMPRESS_THRESHOLD:
                     new_messages.append(old_message)
                     progress.advance(task)
@@ -44,7 +44,8 @@ class CompressHistoryAction(BaseAction):
                     progress.advance(task)
 
         self.con.print("\n[bold green]Chat history compressed.[/bold green]")
-        return new_messages
+        state.messages = new_messages
+        return state
 
 
 COMPRESS_THRESHOLD = 256  # char

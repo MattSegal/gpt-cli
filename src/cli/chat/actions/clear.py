@@ -1,4 +1,4 @@
-from src.schema import ChatMessage
+from src.schema import ChatState
 from .base import BaseAction
 
 
@@ -13,6 +13,7 @@ class ClearHistoryAction(BaseAction):
     def is_match(self, query_text: str) -> bool:
         return query_text == r"\c"
 
-    def run(self, query_text: str, messages: list[ChatMessage]) -> list[ChatMessage]:
+    def run(self, query_text: str, state: list[ChatState]) -> list[ChatState]:
         self.con.print("\n[bold green]Chat history cleared.[/bold green]")
-        return []
+        state.messages = []
+        return state

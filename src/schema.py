@@ -11,3 +11,8 @@ class Role(str, enum.Enum):
 class ChatMessage(BaseModel):
     role: Role
     content: str
+
+
+class ChatState(BaseModel):
+    messages: list[ChatMessage]
+    is_shell_active: bool

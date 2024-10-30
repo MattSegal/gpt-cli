@@ -7,7 +7,7 @@ from rich.markup import escape
 from rich.progress import Progress
 import psutil
 
-from src.schema import ChatMessage, Role
+from src.schema import ChatState, ChatMessage, Role
 from .base import BaseAction
 
 
@@ -27,7 +27,7 @@ class ShellAction(BaseAction):
     def is_match(self, query_text: str) -> bool:
         return query_text.startswith(r"\shell ")
 
-    def run(self, query_text: str, messages: list[ChatMessage]) -> list[ChatMessage]:
+    def run(self, query_text: str, state: list[ChatState]) -> list[ChatState]:
         goal = query_text[7:].strip()
 
         system_info = get_system_info()
@@ -40,7 +40,7 @@ class ShellAction(BaseAction):
         {system_info}
         """
         shell_msg = ChatMessage(role=Role.User, content=shell_instruction)
-        messages.append(shell_msg)
+        state.messages.append(shell_msg)
         model = self.vendor.MODEL_OPTIONS[self.model_option]
         with Progress(transient=True) as progress:
             progress.add_task(
@@ -48,9 +48,9 @@ class ShellAction(BaseAction):
                 start=False,
                 total=None,
             )
-            message = self.vendor.chat(messages, model)
+            message = self.vendor.chat(state.messages, model)
 
-        messages.append(message)
+        state.messages.append(message)
         self.con.print(f"\nAssistant:")
         formatted_text = Padding(escape(message.content), (1, 2))
         self.con.print(formatted_text, width=80)
@@ -70,13 +70,13 @@ class ShellAction(BaseAction):
                 self.con.print(f"\n[bold blue]Shell Command Output:[/bold blue]")
                 formatted_output = Padding(escape(output), (1, 2))
                 self.con.print(formatted_output)
-                messages.append(
+                state.messages.append(
                     ChatMessage(role=Role.User, content=f"Shell command executed:\n\n{output}")
                 )
             except Exception as e:
                 error_message = f"Error executing shell command: {str(e)}"
                 self.con.print(f"\n[bold red]{error_message}[/bold red]")
-                messages.append(ChatMessage(role=Role.User, content=error_message))
+                state.messages.append(ChatMessage(role=Role.User, content=error_message))
 
             # FIXME: Shell output is using a lot of tokens, could we swap it for just the followup message?
             followup_instruction = f"""
@@ -84,7 +84,7 @@ class ShellAction(BaseAction):
             based on the user's original request: {goal}
             """
             followup_msg = ChatMessage(role=Role.User, content=followup_instruction)
-            messages.append(followup_msg)
+            state.messages.append(followup_msg)
 
             with Progress(transient=True) as progress:
                 progress.add_task(
@@ -92,18 +92,18 @@ class ShellAction(BaseAction):
                     start=False,
                     total=None,
                 )
-                message = self.vendor.chat(messages, model)
+                message = self.vendor.chat(state.messages, model)
 
-            messages.append(message)
+            state.messages.append(message)
             self.con.print(f"\nAssistant:")
             formatted_text = Padding(escape(message.content), (1, 2))
             self.con.print(formatted_text, width=80)
-            return messages
+            return state
         else:
             self.con.print("\n[bold yellow]Command execution cancelled.[/bold yellow]")
             cancel_message = f"Command execution cancelled by user."
-            messages.append(ChatMessage(role=Role.User, content=cancel_message))
-            return messages
+            state.messages.append(ChatMessage(role=Role.User, content=cancel_message))
+            return state
 
 
 def extract_shell_command(assistant_message: str, vendor, model_option: str) -> str:

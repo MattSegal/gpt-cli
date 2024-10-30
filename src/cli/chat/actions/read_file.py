@@ -1,7 +1,7 @@
 from rich.padding import Padding
 from rich.markup import escape
 
-from src.schema import ChatMessage, Role
+from src.schema import ChatState, ChatMessage, Role
 from .base import BaseAction
 
 
@@ -16,7 +16,7 @@ class ReadFileAction(BaseAction):
     def is_match(self, query_text: str) -> bool:
         return query_text.startswith(r"\file ")
 
-    def run(self, query_text: str, messages: list[ChatMessage]) -> list[ChatMessage]:
+    def run(self, query_text: str, state: list[ChatState]) -> list[ChatState]:
         file_path = query_text[6:].strip()
         try:
             with open(file_path, "r") as file:
@@ -34,11 +34,11 @@ class ReadFileAction(BaseAction):
             query_text = (
                 f"Content from {file_path} ({file_content_length} chars total):\n\n{file_content}"
             )
-            messages.append(ChatMessage(role=Role.User, content=query_text))
-            return messages
+            state.messages.append(ChatMessage(role=Role.User, content=query_text))
+            return state
         except FileNotFoundError:
             self.con.print(f"\n[bold red]Error: File '{file_path}' not found.[/bold red]")
-            return messages
+            return state
         except IOError:
             self.con.print(f"\n[bold red]Error: Unable to read file '{file_path}'.[/bold red]")
-            return messages
+            return state

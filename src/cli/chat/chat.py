@@ -5,10 +5,9 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 
 from src.settings import load_settings
-from src.schema import ChatMessage
+from src.schema import ChatState
 from src import vendors
 from ..cli import cli
-from .state import ChatState
 from .actions import (
     ReadFileAction,
     ReadWebAction,
@@ -60,23 +59,19 @@ def chat():
     print_help(actions)
 
     kb = build_key_bindings()
-    messages = []
 
-    # TODO: Start using state
-    state = ChatState(is_shell_active=False)
-
+    state = ChatState(is_shell_active=False, messages=[])
     while True:
         try:
             session = PromptSession(key_bindings=kb)
-            query_text = session.prompt("\nYou: ", multiline=True, key_bindings=kb)
-            query_text = query_text.strip()
+            query_text = session.prompt("\nYou: ", multiline=True, key_bindings=kb).strip()
 
             action_matched = False
             for action in actions:
                 if action.is_match(query_text):
                     action_matched = True
-                    messages = action.run(query_text, messages)
-                    print_separator(messages)
+                    state = action.run(query_text, state)
+                    print_separator(state)
                     query_text = ""
                     break
 
@@ -85,7 +80,6 @@ def chat():
 
             if query_text == r"\h":
                 print_help(actions)
-                query_text = ""
                 continue
 
             if query_text == r"\q":
@@ -93,9 +87,8 @@ def chat():
                 return
 
             if chat_action.is_match(query_text):
-                messages = chat_action.run(query_text, messages)
-                print_separator(messages)
-                query_text = ""
+                state = chat_action.run(query_text, state)
+                print_separator(state)
 
         except (KeyboardInterrupt, click.exceptions.Abort):
             console.print("\n\nAssistant: Bye 👋")
@@ -119,9 +112,9 @@ def build_key_bindings():
     return kb
 
 
-def print_separator(messages: list[ChatMessage]):
-    num_messages = len(messages)
-    total_chars = sum(len(m.content) for m in messages)
+def print_separator(state: ChatState):
+    num_messages = len(state.messages)
+    total_chars = sum(len(m.content) for m in state.messages)
     msg_text = f" [{num_messages} msgs, {total_chars} chars]"
     separator = "-" * (console.width - len(msg_text))
     console.print(f"{separator}{msg_text}", style="dim")
