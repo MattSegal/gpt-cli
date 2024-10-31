@@ -16,7 +16,7 @@ class ShellAction(BaseAction):
     help_description = "shell access"
     help_examples = [
         "\shell how much free disk space do I have",
-        "\shell # toggle shell mode",
+        "\shell (toggle shell mode)",
     ]
     active_modes = [ChatMode.Chat, ChatMode.Shell]
 
