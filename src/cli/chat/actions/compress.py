@@ -1,27 +1,25 @@
 from rich.console import Console
 from rich.progress import Progress
 
-from src.schema import ChatState, ChatMessage, Role
+from src.schema import ChatState, ChatMessage, Role, ChatMode
 from .base import BaseAction
 
 
 class CompressHistoryAction(BaseAction):
+
+    help_description = "compress history"
+    help_examples = ["\compress"]
+    active_modes = [ChatMode.Chat, ChatMode.Shell]
 
     def __init__(self, console: Console, vendor, model_option: str) -> None:
         super().__init__(console)
         self.vendor = vendor
         self.model_option = model_option
 
-    def get_help_text(self) -> tuple[str, str]:
-        return (
-            "compress chat history",
-            "\compress",
-        )
+    def is_match(self, query_text: str, state: ChatState) -> bool:
+        return query_text.startswith("\\compress") and state.mode in self.active_modes
 
-    def is_match(self, query_text: str) -> bool:
-        return query_text.startswith("\\compress")
-
-    def run(self, query_text: str, state: list[ChatState]) -> list[ChatState]:
+    def run(self, query_text: str, state: ChatState) -> ChatState:
         model = self.vendor.MODEL_OPTIONS[self.model_option]
         new_messages = []
         with Progress(transient=True) as progress:

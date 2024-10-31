@@ -2,6 +2,11 @@ import enum
 from pydantic import BaseModel
 
 
+class ChatMode(str, enum.Enum):
+    Chat = "chat"
+    Shell = "shell"
+
+
 class Role(str, enum.Enum):
     User = "user"
     Asssistant = "assistant"
@@ -15,4 +20,4 @@ class ChatMessage(BaseModel):
 
 class ChatState(BaseModel):
     messages: list[ChatMessage]
-    is_shell_active: bool
+    mode: ChatMode

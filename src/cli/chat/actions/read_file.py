@@ -1,22 +1,20 @@
 from rich.padding import Padding
 from rich.markup import escape
 
-from src.schema import ChatState, ChatMessage, Role
+from src.schema import ChatState, ChatMessage, Role, ChatMode
 from .base import BaseAction
 
 
 class ReadFileAction(BaseAction):
 
-    def get_help_text(self) -> tuple[str, str]:
-        return (
-            "read file",
-            "\\file /etc/hosts",
-        )
+    help_description = "read file"
+    help_examples = ["\\file /etc/hosts"]
+    active_modes = [ChatMode.Chat, ChatMode.Shell]
 
-    def is_match(self, query_text: str) -> bool:
-        return query_text.startswith(r"\file ")
+    def is_match(self, query_text: str, state: ChatState) -> bool:
+        return query_text.startswith(r"\file ") and state.mode in self.active_modes
 
-    def run(self, query_text: str, state: list[ChatState]) -> list[ChatState]:
+    def run(self, query_text: str, state: ChatState) -> ChatState:
         file_path = query_text[6:].strip()
         try:
             with open(file_path, "r") as file:

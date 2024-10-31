@@ -5,7 +5,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 
 from src.settings import load_settings
-from src.schema import ChatState
+from src.schema import ChatState, ChatMode
 from src import vendors
 from ..cli import cli
 from .actions import (
@@ -21,10 +21,10 @@ from .actions import (
 console = Console(width=100)
 
 HELP_OPTIONS = {
-    "submit": "Enter",
-    "newline": "CTRL-J",
-    "quit": "CTRL-C or \q",
-    "help": "\h",
+    "submit": ["Enter"],
+    "newline": ["CTRL-J"],
+    "quit": ["CTRL-C, \q"],
+    "help": ["\h"],
 }
 
 
@@ -48,19 +48,20 @@ def chat():
 
     model_option = vendor.DEFAULT_MODEL_OPTION
     console.print(f"[green]Chatting with {vendor.MODEL_NAME} {model_option}")
+    state = ChatState(mode=ChatMode.Chat, messages=[])
     chat_action = ChatAction(console, vendor, model_option)
     actions = [
-        ShellAction(console, vendor, model_option),
         ReadWebAction(console),
         ReadFileAction(console),
         ClearHistoryAction(console),
         CompressHistoryAction(console, vendor, model_option),
+        # Last so it can catch all cmds in shell mode.
+        ShellAction(console, vendor, model_option),
     ]
-    print_help(actions)
+    print_help(actions, state)
 
     kb = build_key_bindings()
 
-    state = ChatState(is_shell_active=False, messages=[])
     while True:
         try:
             session = PromptSession(key_bindings=kb)
@@ -68,7 +69,7 @@ def chat():
 
             action_matched = False
             for action in actions:
-                if action.is_match(query_text):
+                if action.is_match(query_text, state):
                     action_matched = True
                     state = action.run(query_text, state)
                     print_separator(state)
@@ -79,14 +80,14 @@ def chat():
                 continue
 
             if query_text == r"\h":
-                print_help(actions)
+                print_help(actions, state)
                 continue
 
             if query_text == r"\q":
                 console.print("\n\nAssistant: Bye 👋")
                 return
 
-            if chat_action.is_match(query_text):
+            if chat_action.is_match(query_text, state):
                 state = chat_action.run(query_text, state)
                 print_separator(state)
 
@@ -115,20 +116,35 @@ def build_key_bindings():
 def print_separator(state: ChatState):
     num_messages = len(state.messages)
     total_chars = sum(len(m.content) for m in state.messages)
-    msg_text = f" [{num_messages} msgs, {total_chars} chars]"
-    separator = "-" * (console.width - len(msg_text))
-    console.print(f"{separator}{msg_text}", style="dim")
+
+    msg_prefix = f"\[{state.mode} mode] "
+    msg_suffix = f" [{num_messages} msgs, {total_chars} chars]"
+    separator = "-" * (console.width - len(msg_prefix) - len(msg_suffix))
+
+    color_setting = ""
+    if state.mode == ChatMode.Shell:
+        color_setting = "[yellow]"
+
+    console.print(f"{color_setting}{msg_prefix}{separator}{msg_suffix}", style="dim")
 
 
-def print_help(actions: list[BaseAction]):
+def print_help(actions: list[BaseAction], state: ChatState):
     help_options = {**HELP_OPTIONS}
     for action in actions:
-        k, v = action.get_help_text()
-        help_options[k] = v
+        if state.mode in action.active_modes:
+            help_options[action.help_description] = action.help_examples
 
-    max_key_length = max(len(key) for key in help_options)
-    help_text = [
-        f"[green]{key.ljust(max_key_length)}:  {value}" for key, value in help_options.items()
-    ]
-    formatted_text = Padding("\n".join(help_text), (1, 2))
+    max_key_length = max(len(key) for key in help_options) + 2  # for colon + space
+    help_lines = []
+    for k, v in help_options.items():
+        if not v:
+            continue
+
+        action_desc = f"{k}: ".ljust(max_key_length)
+        help_lines.append(f"{action_desc}{v[0]}")
+        for val in v[1:]:
+            space = f"".ljust(max_key_length)
+            help_lines.append(f"{space}{val}")
+
+    formatted_text = Padding("[green]" + "\n".join(help_lines), (1, 2))
     console.print(formatted_text)

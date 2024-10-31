@@ -7,28 +7,45 @@ from rich.markup import escape
 from rich.progress import Progress
 import psutil
 
-from src.schema import ChatState, ChatMessage, Role
+from src.schema import ChatState, ChatMessage, Role, ChatMode
 from .base import BaseAction
 
 
 class ShellAction(BaseAction):
+
+    help_description = "shell access"
+    help_examples = [
+        "\shell how much free disk space do I have",
+        "\shell # toggle shell mode",
+    ]
+    active_modes = [ChatMode.Chat, ChatMode.Shell]
 
     def __init__(self, console: Console, vendor, model_option: str) -> None:
         super().__init__(console)
         self.vendor = vendor
         self.model_option = model_option
 
-    def get_help_text(self) -> tuple[str, str]:
-        return (
-            "shell access",
-            "\shell how much free disk space do I have",
-        )
+    def is_match(self, query_text: str, state: ChatState) -> bool:
+        if state.mode == ChatMode.Shell:
+            return bool(query_text)
 
-    def is_match(self, query_text: str) -> bool:
-        return query_text.startswith(r"\shell ")
+        return query_text.startswith(r"\shell") and state.mode in self.active_modes
 
-    def run(self, query_text: str, state: list[ChatState]) -> list[ChatState]:
-        goal = query_text[7:].strip()
+    def run(self, query_text: str, state: ChatState) -> ChatState:
+        if state.mode == ChatMode.Shell and query_text == "\shell":
+            state.mode = ChatMode.Chat
+            self.con.print(f"\n[bold yellow]Shell mode disabled[/bold yellow]\n")
+            return state
+        elif state.mode != ChatMode.Shell and query_text == "\shell":
+            state.mode = ChatMode.Shell
+            self.con.print(f"\n[bold yellow]Shell mode enabled[/bold yellow]\n")
+            return state
+        elif state.mode == ChatMode.Shell and not query_text.startswith(r"\shell "):
+            goal = query_text.strip()
+        elif query_text.startswith(r"\shell "):
+            goal = query_text[7:].strip()
+        else:
+            self.con.print(f"\n[bold yellow]Shell command not recognised[/bold yellow]\n")
 
         system_info = get_system_info()
         shell_instruction = f"""

@@ -1,17 +1,18 @@
 from rich.console import Console
 
-from src.schema import ChatState
+from src.schema import ChatState, ChatMode
 
 
 class BaseAction:
 
-    def __init__(self, console: Console) -> None:
+    help_description: str
+    help_examples: list[str]
+    active_modes: list[ChatMode]
+
+    def __init__(self, console: Console):
         self.con = console
 
-    def get_help_text(self) -> tuple[str, str]:
-        raise NotImplementedError()
-
-    def is_match(self, query_text: str) -> bool:
+    def is_match(self, query_text: str, state: ChatState) -> bool:
         raise NotImplementedError()
 
     def run(self, query_text: str, state: ChatState) -> ChatState:
