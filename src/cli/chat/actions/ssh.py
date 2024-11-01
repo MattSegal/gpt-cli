@@ -24,6 +24,7 @@ class SSHAction(BaseAction):
         self.vendor = vendor
         self.model_option = model_option
         self.ssh_client = None
+        self.system_info = None
 
     def is_match(self, query_text: str, state: ChatState) -> bool:
         if state.mode == ChatMode.Ssh:
@@ -96,6 +97,14 @@ class SSHAction(BaseAction):
         self.con.print(f"\n[bold magenta]SSH mode disabled[/bold magenta]\n")
         return state
 
+    def get_system_info(self):
+        command_str = (
+            "(cat /etc/os-release 2>/dev/null || cat /etc/issue 2>/dev/null || echo "
+            ") && uname -a"
+        )
+        _, stdout, _ = self.ssh_client.exec_command(command_str)
+        return stdout.read().decode()
+
     def run_command(self, query_text: str, state: ChatState) -> ChatState:
         if not self.ssh_client:
             self.con.print("\n[bold red]Not connected to any SSH host.[/bold red]\n")
@@ -113,6 +122,8 @@ class SSHAction(BaseAction):
 
         This command will be executed over SSH on remote host {state.ssh_config.conn_name}
         You do not need to SSH into the host that has been taken care of. 
+        Host system info (take this into consideration):
+        {self.system_info}
         """
 
         ssh_msg = ChatMessage(role=Role.User, content=ssh_instruction)
@@ -206,6 +217,7 @@ class SSHAction(BaseAction):
                 hostname=ssh_config.host, port=ssh_config.port, username=ssh_config.username
             )
             self.current_host = f"{ssh_config.username}@{ssh_config.host}"
+            self.system_info = self.get_system_info()
             return True, f"Connected to {self.current_host}"
         except Exception as e:
             return False, f"SSH connection failed: {str(e)}"

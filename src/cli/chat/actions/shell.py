@@ -18,7 +18,7 @@ class ShellAction(BaseAction):
         "\shell how much free disk space do I have",
         "\shell (toggle shell mode)",
     ]
-    active_modes = [ChatMode.Chat, ChatMode.Shell]
+    active_modes = [ChatMode.Chat, ChatMode.Shell, ChatMode.Ssh]
 
     def __init__(self, console: Console, vendor, model_option: str) -> None:
         super().__init__(console)
@@ -26,6 +26,10 @@ class ShellAction(BaseAction):
         self.model_option = model_option
 
     def is_match(self, query_text: str, state: ChatState) -> bool:
+        # HACK: Make this generic
+        if query_text.startswith("\ssh"):
+            return False
+
         if state.mode == ChatMode.Shell:
             return bool(query_text)
 
@@ -34,11 +38,11 @@ class ShellAction(BaseAction):
     def run(self, query_text: str, state: ChatState) -> ChatState:
         if state.mode == ChatMode.Shell and query_text == "\shell":
             state.mode = ChatMode.Chat
-            self.con.print(f"\n[bold yellow]Shell mode disabled[/bold yellow]\n")
+            self.con.print(f"[bold yellow]Shell mode disabled[/bold yellow]\n")
             return state
         elif state.mode != ChatMode.Shell and query_text == "\shell":
             state.mode = ChatMode.Shell
-            self.con.print(f"\n[bold yellow]Shell mode enabled[/bold yellow]\n")
+            self.con.print(f"[bold yellow]Shell mode enabled[/bold yellow]\n")
             return state
         elif state.mode == ChatMode.Shell and not query_text.startswith(r"\shell "):
             goal = query_text.strip()

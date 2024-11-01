@@ -7,6 +7,8 @@
 - dynamic user defined tasks (eg summarise, crawl)
 - cost tracking of user queries
 
+- \chat to chat
+
 - file
     - file path completion?
     - file explorer ui?
