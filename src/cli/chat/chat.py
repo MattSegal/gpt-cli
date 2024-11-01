@@ -5,7 +5,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 
 from src.settings import load_settings
-from src.schema import ChatState, ChatMode
+from src.schema import ChatState, ChatMode, SshConfig
 from src import vendors
 from ..cli import cli
 from .actions import (
@@ -16,6 +16,7 @@ from .actions import (
     ShellAction,
     ChatAction,
     BaseAction,
+    SSHAction,
 )
 
 console = Console(width=100)
@@ -48,7 +49,7 @@ def chat():
 
     model_option = vendor.DEFAULT_MODEL_OPTION
     console.print(f"[green]Chatting with {vendor.MODEL_NAME} {model_option}")
-    state = ChatState(mode=ChatMode.Chat, messages=[])
+    state = ChatState(mode=ChatMode.Chat, messages=[], ssh_config=None)
     chat_action = ChatAction(console, vendor, model_option)
     actions = [
         ReadWebAction(console),
@@ -57,6 +58,7 @@ def chat():
         CompressHistoryAction(console, vendor, model_option),
         # Last so it can catch all cmds in shell mode.
         ShellAction(console, vendor, model_option),
+        SSHAction(console, vendor, model_option),
     ]
     print_help(actions, state)
 
@@ -66,6 +68,14 @@ def chat():
         try:
             session = PromptSession(key_bindings=kb)
             query_text = session.prompt("\nYou: ", multiline=True, key_bindings=kb).strip()
+
+            if query_text == r"\h":
+                print_help(actions, state)
+                continue
+
+            if query_text == r"\q":
+                console.print("\n\nAssistant: Bye 👋")
+                return
 
             action_matched = False
             for action in actions:
@@ -78,14 +88,6 @@ def chat():
 
             if action_matched:
                 continue
-
-            if query_text == r"\h":
-                print_help(actions, state)
-                continue
-
-            if query_text == r"\q":
-                console.print("\n\nAssistant: Bye 👋")
-                return
 
             if chat_action.is_match(query_text, state):
                 state = chat_action.run(query_text, state)
@@ -117,15 +119,21 @@ def print_separator(state: ChatState):
     num_messages = len(state.messages)
     total_chars = sum(len(m.content) for m in state.messages)
 
-    msg_prefix = f"\[{state.mode} mode] "
+    msg_prefix = f"\[{state.mode} mode]"
+    ssh_prefix = ""
+    if state.ssh_config is not None:
+        ssh_prefix = f"\[connected to {state.ssh_config.conn_name}]"
+
     msg_suffix = f" [{num_messages} msgs, {total_chars} chars]"
-    separator = "-" * (console.width - len(msg_prefix) - len(msg_suffix))
+    separator = "-" * (console.width - len(msg_prefix) - len(msg_suffix) - len(ssh_prefix))
 
     color_setting = ""
     if state.mode == ChatMode.Shell:
         color_setting = "[yellow]"
+    if state.mode == ChatMode.Ssh:
+        color_setting = "[magenta]"
 
-    console.print(f"{color_setting}{msg_prefix}{separator}{msg_suffix}", style="dim")
+    console.print(f"{color_setting}{msg_prefix}{ssh_prefix}{separator}{msg_suffix}", style="dim")
 
 
 def print_help(actions: list[BaseAction], state: ChatState):

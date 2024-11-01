@@ -7,12 +7,14 @@
 - dynamic user defined tasks (eg summarise, crawl)
 - cost tracking of user queries
 
+- file
+    - file path completion?
+    - file explorer ui?
 
 - shell commands over ssh session
-    /shell enable
-    /ssh enable qsqws
-    /ssh disable
-    /shell disable
+    /ssh
+    /ssh connect
+    /ssh disconnect
 
 \agent  use all available commands to complete a task
 \tasks  list all tasks

@@ -26,6 +26,7 @@ click = "^8.1.7"
 pydantic-settings = "^2.6.0"
 prompt-toolkit = "^3.0.48"
 psutil = "^6.1.0"
+paramiko = "^3.5.0"
 
 [tool.isort]
 known_first_party = ["src"]

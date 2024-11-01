@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class ChatMode(str, enum.Enum):
     Chat = "chat"
     Shell = "shell"
+    Ssh = "ssh"
 
 
 class Role(str, enum.Enum):
@@ -18,6 +19,17 @@ class ChatMessage(BaseModel):
     content: str
 
 
+class SshConfig(BaseModel):
+    host: str
+    username: str
+    port: int = 22
+
+    @property
+    def conn_name(self) -> str:
+        return f"{self.username}@{self.host}"
+
+
 class ChatState(BaseModel):
     messages: list[ChatMessage]
     mode: ChatMode
+    ssh_config: SshConfig | None
