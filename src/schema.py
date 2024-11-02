@@ -33,3 +33,10 @@ class ChatState(BaseModel):
     messages: list[ChatMessage]
     mode: ChatMode
     ssh_config: SshConfig | None
+
+
+class CommandOption(BaseModel):
+    template: str
+    description: str
+    prefix: str | None = None
+    example: str | None = None

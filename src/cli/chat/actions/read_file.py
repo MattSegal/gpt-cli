@@ -1,7 +1,7 @@
 from rich.padding import Padding
 from rich.markup import escape
 
-from src.schema import ChatState, ChatMessage, Role, ChatMode
+from src.schema import ChatState, ChatMessage, Role, ChatMode, CommandOption
 from .base import BaseAction
 
 
@@ -11,8 +11,21 @@ class ReadFileAction(BaseAction):
     help_examples = ["\\file /etc/hosts"]
     active_modes = [ChatMode.Chat, ChatMode.Shell]
 
-    def is_match(self, query_text: str, state: ChatState) -> bool:
-        return query_text.startswith(r"\file ") and state.mode in self.active_modes
+    cmd_options = [
+        CommandOption(
+            template="\\file <path>",
+            description="Read file",
+            prefix="\\file",
+            example="\\file /etc/hosts",
+        ),
+    ]
+
+    def is_match(self, query_text: str, state: ChatState, cmd_options: list[CommandOption]) -> bool:
+        matches_other_cmd = self.matches_other_cmd(query_text, state, cmd_options)
+        if matches_other_cmd:
+            return False
+        else:
+            return query_text.startswith(r"\file ")
 
     def run(self, query_text: str, state: ChatState) -> ChatState:
         file_path = query_text[6:].strip()

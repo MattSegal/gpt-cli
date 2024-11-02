@@ -1,19 +1,28 @@
 from rich.padding import Padding
 from rich.markup import escape
 
-from src.schema import ChatState, ChatMessage, Role, ChatMode
+from src.schema import ChatState, ChatMessage, Role, CommandOption
 from src.web import fetch_text_for_url
 from .base import BaseAction
 
 
 class ReadWebAction(BaseAction):
 
-    help_description = "read website"
-    help_examples = ["\web example.com"]
-    active_modes = [ChatMode.Chat, ChatMode.Shell]
+    cmd_options = [
+        CommandOption(
+            template="\web <url>",
+            description="Read website",
+            prefix="\web",
+            example="\web example.com",
+        ),
+    ]
 
-    def is_match(self, query_text: str, state: ChatState) -> bool:
-        return query_text.startswith(r"\web ") and state.mode in self.active_modes
+    def is_match(self, query_text: str, state: ChatState, cmd_options: list[CommandOption]) -> bool:
+        matches_other_cmd = self.matches_other_cmd(query_text, state, cmd_options)
+        if matches_other_cmd:
+            return False
+        else:
+            return query_text.startswith(r"\web ")
 
     def run(self, query_text: str, state: ChatState) -> ChatState:
         url = query_text[5:].strip()

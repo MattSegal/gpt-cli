@@ -1,23 +1,31 @@
 from rich.console import Console
 from rich.progress import Progress
 
-from src.schema import ChatState, ChatMessage, Role, ChatMode
+from src.schema import ChatState, ChatMessage, Role, CommandOption
 from .base import BaseAction
 
 
 class CompressHistoryAction(BaseAction):
 
-    help_description = "compress history"
-    help_examples = ["\compress"]
-    active_modes = [ChatMode.Chat, ChatMode.Shell]
+    cmd_options = [
+        CommandOption(
+            template="\compress",
+            description="Compress chat history",
+            prefix="\compress",
+        ),
+    ]
 
     def __init__(self, console: Console, vendor, model_option: str) -> None:
         super().__init__(console)
         self.vendor = vendor
         self.model_option = model_option
 
-    def is_match(self, query_text: str, state: ChatState) -> bool:
-        return query_text.startswith("\\compress") and state.mode in self.active_modes
+    def is_match(self, query_text: str, state: ChatState, cmd_options: list[CommandOption]) -> bool:
+        matches_other_cmd = self.matches_other_cmd(query_text, state, cmd_options)
+        if matches_other_cmd:
+            return False
+        else:
+            return query_text.startswith("\\compress")
 
     def run(self, query_text: str, state: ChatState) -> ChatState:
         model = self.vendor.MODEL_OPTIONS[self.model_option]

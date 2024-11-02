@@ -7,33 +7,41 @@ from rich.markup import escape
 from rich.progress import Progress
 import psutil
 
-from src.schema import ChatState, ChatMessage, Role, ChatMode
+from src.schema import ChatState, ChatMessage, Role, ChatMode, CommandOption
 from .base import BaseAction
+
+NO_COMMAND = "NO_COMMAND_EXTRACTED"
 
 
 class ShellAction(BaseAction):
 
-    help_description = "shell access"
-    help_examples = [
-        "\shell how much free disk space do I have",
-        "\shell (toggle shell mode)",
+    cmd_options = [
+        CommandOption(
+            template="\shell",
+            description="Toggle shell mode",
+            prefix="\shell",
+        ),
+        CommandOption(
+            template="\shell <query>",
+            description="Run shell command",
+            prefix="\shell",
+            example="\shell how much free disk space do I have",
+        ),
     ]
-    active_modes = [ChatMode.Chat, ChatMode.Shell, ChatMode.Ssh]
 
     def __init__(self, console: Console, vendor, model_option: str) -> None:
         super().__init__(console)
         self.vendor = vendor
         self.model_option = model_option
 
-    def is_match(self, query_text: str, state: ChatState) -> bool:
-        # HACK: Make this generic
-        if query_text.startswith("\ssh"):
+    def is_match(self, query_text: str, state: ChatState, cmd_options: list[CommandOption]) -> bool:
+        matches_other_cmd = self.matches_other_cmd(query_text, state, cmd_options)
+        if matches_other_cmd:
             return False
-
-        if state.mode == ChatMode.Shell:
+        elif state.mode == ChatMode.Shell:
             return bool(query_text)
-
-        return query_text.startswith(r"\shell") and state.mode in self.active_modes
+        else:
+            return query_text.startswith(r"\shell")
 
     def run(self, query_text: str, state: ChatState) -> ChatState:
         if state.mode == ChatMode.Shell and query_text == "\shell":
@@ -76,6 +84,12 @@ class ShellAction(BaseAction):
         formatted_text = Padding(escape(message.content), (1, 2))
         self.con.print(formatted_text, width=80)
         command_str = extract_shell_command(message.content, self.vendor, self.model_option)
+        if command_str == NO_COMMAND:
+            no_extract_msg = "No command could be extracted"
+            self.con.print(f"\n[bold yellow]{no_extract_msg}[/bold yellow]")
+            state.messages.append(ChatMessage(role=Role.User, content=no_extract_msg))
+            return state
+
         self.con.print(f"\n[bold yellow]Execute this command?[/bold yellow]")
         self.con.print(f"[bold cyan]{command_str}[/bold cyan]")
         user_input = input("Enter Y/n: ").strip().lower()
@@ -137,6 +151,8 @@ def extract_shell_command(assistant_message: str, vendor, model_option: str) -> 
     Return only a single shell command and nothing else.
     This is the chat log:
     {assistant_message}
+
+    If there is not any command to extract then return only the exact string {NO_COMMAND}
     """
     return vendor.answer_query(query_text, model)
 

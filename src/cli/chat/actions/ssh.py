@@ -6,18 +6,36 @@ from rich.padding import Padding
 from rich.markup import escape
 from rich.progress import Progress
 
-from src.schema import ChatState, ChatMessage, Role, ChatMode, SshConfig
+from src.schema import ChatState, ChatMessage, Role, ChatMode, SshConfig, CommandOption
 from .base import BaseAction
+
+NO_COMMAND = "NO_COMMAND_EXTRACTED"
 
 
 class SSHAction(BaseAction):
-    help_description = "ssh access"
-    help_examples = [
-        r"\ssh (toggle ssh mode)",
-        r"\ssh connect (connect to host)",
-        r"\ssh disconnect (disconnect from current host)",
+    cmd_options = [
+        CommandOption(
+            template=r"\ssh",
+            description="Toggle ssh mode",
+            prefix=r"\ssh",
+        ),
+        CommandOption(
+            template="\ssh <query>",
+            description="Run shell command via ssh",
+            prefix="\ssh",
+            example="\ssh how much free disk space do I have",
+        ),
+        CommandOption(
+            template=r"\ssh connect",
+            description="Connect to host",
+            prefix=r"\ssh",
+        ),
+        CommandOption(
+            template=r"\ssh disconnect",
+            description="Disconnect from current host",
+            prefix=r"\ssh",
+        ),
     ]
-    active_modes = [ChatMode.Chat, ChatMode.Ssh, ChatMode.Shell]
 
     def __init__(self, console: Console, vendor, model_option: str) -> None:
         super().__init__(console)
@@ -26,11 +44,14 @@ class SSHAction(BaseAction):
         self.ssh_client = None
         self.system_info = None
 
-    def is_match(self, query_text: str, state: ChatState) -> bool:
-        if state.mode == ChatMode.Ssh:
+    def is_match(self, query_text: str, state: ChatState, cmd_options: list[CommandOption]) -> bool:
+        matches_other_cmd = self.matches_other_cmd(query_text, state, cmd_options)
+        if matches_other_cmd:
+            return False
+        elif state.mode == ChatMode.Ssh:
             return bool(query_text)
-
-        return query_text.startswith(r"\ssh") and state.mode in self.active_modes
+        else:
+            return query_text.startswith("\ssh")
 
     def run(self, query_text: str, state: ChatState) -> ChatState:
         if query_text == r"\ssh connect":
@@ -144,6 +165,12 @@ class SSHAction(BaseAction):
         self.con.print(formatted_text, width=80)
 
         command_str = extract_ssh_command(message.content, self.vendor, self.model_option)
+        if command_str == NO_COMMAND:
+            no_extract_msg = "No command could be extracted"
+            self.con.print(f"\n[bold yellow]{no_extract_msg}[/bold yellow]")
+            state.messages.append(ChatMessage(role=Role.User, content=no_extract_msg))
+            return state
+
         self.con.print(
             f"\n[bold yellow]Execute this command on {state.ssh_config.conn_name}?[/bold yellow]"
         )
@@ -233,5 +260,7 @@ def extract_ssh_command(assistant_message: str, vendor, model_option: str) -> st
     Return only a single command and nothing else.
     This is the chat log:
     {assistant_message}
+
+    If there is not any command to extract then return only the exact string {NO_COMMAND}
     """
     return vendor.answer_query(query_text, model)

@@ -1,11 +1,13 @@
 import click
 from rich.padding import Padding
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 
 from src.settings import load_settings
-from src.schema import ChatState, ChatMode, SshConfig
+from src.schema import ChatState, ChatMode, CommandOption
 from src import vendors
 from ..cli import cli
 from .actions import (
@@ -21,12 +23,12 @@ from .actions import (
 
 console = Console(width=100)
 
-HELP_OPTIONS = {
-    "submit": ["Enter"],
-    "newline": ["CTRL-J"],
-    "quit": ["CTRL-C, \q"],
-    "help": ["\h"],
-}
+CMD_OPTIONS = [
+    CommandOption(template="Enter", description="Submit"),
+    CommandOption(template="CTRL-J", description="New line"),
+    CommandOption(template="CTRL-C, \\q", description="Quit", prefix="\\q"),
+    CommandOption(template="\\h", description="Show help", prefix="\\h"),
+]
 
 
 @cli.command()
@@ -50,7 +52,6 @@ def chat():
     model_option = vendor.DEFAULT_MODEL_OPTION
     console.print(f"[green]Chatting with {vendor.MODEL_NAME} {model_option}")
     state = ChatState(mode=ChatMode.Chat, messages=[], ssh_config=None)
-    chat_action = ChatAction(console, vendor, model_option)
     actions = [
         ReadWebAction(console),
         ReadFileAction(console),
@@ -59,8 +60,13 @@ def chat():
         # Last so it can catch all cmds in shell mode.
         ShellAction(console, vendor, model_option),
         SSHAction(console, vendor, model_option),
+        ChatAction(console, vendor, model_option),
     ]
-    print_help(actions, state)
+    cmd_options = [*CMD_OPTIONS]
+    for action in actions:
+        cmd_options.extend(action.cmd_options)
+
+    print_help(cmd_options)
 
     kb = build_key_bindings()
 
@@ -70,28 +76,19 @@ def chat():
             query_text = session.prompt("\nYou: ", multiline=True, key_bindings=kb).strip()
 
             if query_text == r"\h":
-                print_help(actions, state)
+                print_help(cmd_options)
                 continue
 
             if query_text == r"\q":
                 console.print("\n\nAssistant: Bye 👋")
                 return
 
-            action_matched = False
             for action in actions:
-                if action.is_match(query_text, state):
-                    action_matched = True
+                if action.is_match(query_text, state, cmd_options):
                     state = action.run(query_text, state)
                     print_separator(state)
                     query_text = ""
                     break
-
-            if action_matched:
-                continue
-
-            if chat_action.is_match(query_text, state):
-                state = chat_action.run(query_text, state)
-                print_separator(state)
 
         except (KeyboardInterrupt, click.exceptions.Abort):
             console.print("\n\nAssistant: Bye 👋")
@@ -136,23 +133,16 @@ def print_separator(state: ChatState):
     console.print(f"{color_setting}{msg_prefix}{ssh_prefix}{separator}{msg_suffix}", style="dim")
 
 
-def print_help(actions: list[BaseAction], state: ChatState):
-    help_options = {**HELP_OPTIONS}
-    for action in actions:
-        if state.mode in action.active_modes:
-            help_options[action.help_description] = action.help_examples
+def print_help(cmd_options: list[CommandOption]):
+    table = Table(show_header=False, box=None, padding=(0, 1))
+    table.add_column("Command", style="green")
+    table.add_column("Description", style="dim")
+    table.add_column("Example", style="dim")
+    for cmd_option in cmd_options:
+        table.add_row(
+            cmd_option.template,
+            cmd_option.description,
+            cmd_option.example,
+        )
 
-    max_key_length = max(len(key) for key in help_options) + 2  # for colon + space
-    help_lines = []
-    for k, v in help_options.items():
-        if not v:
-            continue
-
-        action_desc = f"{k}: ".ljust(max_key_length)
-        help_lines.append(f"{action_desc}{v[0]}")
-        for val in v[1:]:
-            space = f"".ljust(max_key_length)
-            help_lines.append(f"{space}{val}")
-
-    formatted_text = Padding("[green]" + "\n".join(help_lines), (1, 2))
-    console.print(formatted_text)
+    console.print(Panel(table, title="Commands", border_style="dim"))
