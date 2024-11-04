@@ -15,11 +15,12 @@ def answer_query(prompt: str, model: str) -> str:
     return chat_completion.choices[0].message.content
 
 
-def chat(messages: list[ChatMessage], model: str) -> ChatMessage:
+def chat(messages: list[ChatMessage], model: str, max_tokens: int = 1024) -> ChatMessage:
     client = get_client()
     chat_completion = client.chat.completions.create(
         messages=[m.model_dump() for m in messages],
         model=model,
+        max_tokens=max_tokens,
     )
     content = chat_completion.choices[0].message.content
     return ChatMessage(role=Role.Asssistant, content=content)

@@ -57,13 +57,14 @@ def load_tasks() -> dict[str, TaskMeta]:
     if not TASKS_META_FILE.exists():
         return {}
     with open(TASKS_META_FILE, "r") as f:
-        return json.load(f)
+        task_index = json.load(f)
+        return {slug: TaskMeta(**task_data) for slug, task_data in task_index.items()}
 
 
 def save_tasks(tasks: dict[str, TaskMeta]):
     os.makedirs(TASKS_DIR, exist_ok=True)
     with open(TASKS_META_FILE, "w") as f:
-        return json.dump(tasks, f, indent=2)
+        return json.dump({slug: t.model_dump() for slug, t in tasks.items()}, f, indent=2)
 
 
 def save_task(task: TaskMeta, python_script: str):

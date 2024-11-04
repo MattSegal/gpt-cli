@@ -19,7 +19,7 @@ def answer_query(prompt: str, model: str) -> str:
         return "Request failed - Anthropic is broken"
 
 
-def chat(messages: list[ChatMessage], model: str) -> ChatMessage:
+def chat(messages: list[ChatMessage], model: str, max_tokens: int = 1024) -> ChatMessage:
     client = get_client()
     messages = [
         ChatMessage(role=Role.User, content=m.content) if m.role == Role.System else m
@@ -28,7 +28,7 @@ def chat(messages: list[ChatMessage], model: str) -> ChatMessage:
     try:
         message = client.messages.create(
             model=model,
-            max_tokens=1024,
+            max_tokens=max_tokens,
             messages=[m.model_dump() for m in messages],
         )
         content = message.content[0].text

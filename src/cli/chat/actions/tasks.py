@@ -1,3 +1,4 @@
+import re
 import sys
 import json
 
@@ -9,7 +10,7 @@ from rich.markup import escape
 from rich.padding import Padding
 
 
-from src.schema import ChatState, ChatMessage, Role, ChatMode, CommandOption
+from src.schema import ChatState, ChatMessage, Role, ChatMode, CommandOption, TaskMeta
 from src.tasks import load_tasks, save_task, delete_task, run_task, TOOLS
 
 from .base import BaseAction
@@ -92,7 +93,7 @@ class TaskAction(BaseAction):
             table.add_column("Name", style="green")
             table.add_column("Slug", style="dim")
             table.add_column("Description", style="dim", width=50, overflow="fold")
-            for task in self.tasks:
+            for task in self.tasks.values():
                 table.add_row(task.name, task.slug, task.description)
 
             self.con.print(Panel(table, title="Tasks", border_style="dim"))
@@ -102,7 +103,23 @@ class TaskAction(BaseAction):
         return state
 
     def run_delete_task(self, query_text: str, state: ChatState) -> ChatState:
-        self.con.print("[green]run_delete_task[/green]")
+        slug = query_text.split()[-1]
+        if not slug:
+            self.con.print(
+                f"\n[bold red]Error: You must provide a slug to delete a task[/bold red]"
+            )
+
+        # Check if any task depends on this one
+        for task_slug, task in self.tasks.items():
+            if slug in task.depends_on:
+                self.con.print(
+                    f"\n[bold red]Error: Cannot delete task '{slug}' because task '{task_slug}' depends on it[/bold red]"
+                )
+                return state
+
+        delete_task(slug)
+        self.con.print(f"\n[green]Task '{slug}' deleted successfully[/green]")
+        self.tasks = load_tasks()
         return state
 
     def run_update_task(self, query_text: str, state: ChatState) -> ChatState:
@@ -115,6 +132,11 @@ class TaskAction(BaseAction):
 
     def run_create_task(self, query_text: str, state: ChatState) -> ChatState:
         slug = query_text.split()[-1]
+        if not slug:
+            self.con.print(
+                f"\n[bold red]Error: You must provide a slug for your new task[/bold red]"
+            )
+
         if any(task_slug == slug for task_slug in self.tasks):
             self.con.print(f"\n[bold red]Error: Task with slug '{slug}' already exists[/bold red]")
             return state
@@ -125,6 +147,7 @@ class TaskAction(BaseAction):
         )
         tools_json = json.dumps({slug: task.to_schema() for slug, task in TOOLS.items()}, indent=2)
         instruction = TASK_MODE_ENTRY_INSTRUCTION.format(
+            slug=slug,
             system_info=self.system_info,
             python_version=python_version,
             dependencies_json=dependencies_json,
@@ -147,9 +170,13 @@ class TaskAction(BaseAction):
         # TODO: Gather input data somehow
         input_data = {}
 
-        output_data = run_task(input_data)
+        self.con.print(f"[green]Running task '{slug}'[/green]")
+        output_data = run_task(slug, input_data)
+        self.con.print(f"[green]Results:[/green]")
+        self.con.print_json(data=output_data)
 
-        self.con.print("[green]run_task[/green]")
+        task_results = f"Result of task {slug}:\n" + json.dumps(output_data, indent=2)
+        state.messages.append(ChatMessage(role=Role.User, content=task_results))
         return state
 
     def run_task_mode(self, query_text: str, state: ChatState) -> ChatState:
@@ -161,14 +188,43 @@ class TaskAction(BaseAction):
                 start=False,
                 total=None,
             )
-            message = self.vendor.chat(self.task_thread, model)
+            message = self.vendor.chat(self.task_thread, model, max_tokens=5 * 1024)
 
         self.task_thread.append(message)
         self.con.print(f"\nAssistant:")
         formatted_text = Padding(escape(message.content), (1, 2))
         self.con.print(formatted_text, width=80)
 
+        if TASK_EXIT_TOKEN in message.content:
+            try:
+                task_meta = extract_task_meta(message.content)
+            except Exception:
+                self.con.print("[bold red]Error: Could not extract task metadata JSON[/bold red]")
+                return state
+
+            try:
+                task_script = extract_task_script(message.content)
+            except Exception:
+                self.con.print("[bold red]Error: Could not extract Python script[/bold red]")
+                return state
+
+            save_task(task_meta, task_script)
+            self.tasks = load_tasks()
+            self.con.print(f"[green]Task '{task_meta.name} ({task_meta.slug})' created[/green]")
+            state.mode = ChatMode.Chat
+
         return state
+
+
+def extract_task_meta(message: str) -> TaskMeta:
+    json_match = re.search(r"```json\s*(.*?)\s*```", message, re.DOTALL)
+    task_meta = json.loads(json_match.group(1))
+    return TaskMeta(**task_meta)
+
+
+def extract_task_script(message: str) -> str:
+    python_match = re.search(r"```python\s*(.*?)\s*```", message, re.DOTALL)
+    return python_match.group(1)
 
 
 TASK_EXIT_TOKEN = "TASK_GENERATION_COMPLETE"
