@@ -163,8 +163,10 @@ def get_system_info() -> str:
         os_info = f"Windows {platform.release()}"
         additional_info = platform.win32_ver()
     elif system == "Darwin":
-        os_info = f"macOS {platform.mac_ver()[0]}"
-        additional_info = ", ".join(str(item) for item in platform.mac_ver()[1:])
+        mac_ver = platform.mac_ver()
+        os_info = f"macOS {mac_ver[0]}"
+        arch = platform.machine()
+        additional_info = f"Arch: {arch}"
     elif system == "Linux":
         os_info = f"Linux {platform.release()}"
         try:

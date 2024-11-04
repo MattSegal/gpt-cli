@@ -20,6 +20,7 @@
 # Tasks System
 
 ## Core Concepts
+
 - Tasks are self-contained modules that can be dynamically loaded
 - Each task has a clear single responsibility
 - Tasks can be chained together in workflows
@@ -32,8 +33,7 @@
 \task delete <name>
 \task update  <name>
 \task inspect <name>
-\task <name> [args]     # Run a specific task
-\workflow               # Create/manage task workflows
+\task run <name> [args]     # Run a specific task
 
 ```
 
@@ -41,17 +41,11 @@
 ```
 ~/.ask/tasks/
 ├── index.json             # Task registry
-├── workflows/             # Saved task workflows
-└── installed/            
-    ├── web-scraper/      # Example task
-    │   ├── manifest.json
-    │   ├── entrypoint.py
-    │   ├── requirements.txt
-    │   └── schemas/
-    │       ├── input.json
-    │       └── output.json
-    └── summarizer/
-        └── ...
+├── web-scraper/      # Example task
+│   ├── entrypoint.py
+│   └── ...
+└── summarizer/
+    └── ...
 ```
 
 ## Task Registry (index.json)
@@ -63,7 +57,6 @@
             "name": "Web Scraper",
             "description": "Scrapes content from websites with customizable rules",
             "slug": "web-scraper",
-            "requirements": ["requests", "beautifulsoup4"],
             "entrypoint": "entrypoint.py:task_handler",
             "input_schema": {
                 "type": "object",
@@ -111,7 +104,8 @@
             "name": "News Aggregator",
             "description": "Scrapes news and generates summaries",
             "slug": "web-scraper",
-
+            "input_schema": {},
+            "output_schema": {},
             "steps": [
                 {
                     "task": "web-scraper",

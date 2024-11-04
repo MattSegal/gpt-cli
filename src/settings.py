@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings
 
 CONFIG_DIR = Path.home() / ".ask"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+TASKS_DIR = CONFIG_DIR / "tasks"
 
 
 @cache

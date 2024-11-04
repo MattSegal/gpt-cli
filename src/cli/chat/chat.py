@@ -17,7 +17,7 @@ from .actions import (
     ClearHistoryAction,
     ShellAction,
     ChatAction,
-    BaseAction,
+    TaskAction,
     SSHAction,
 )
 
@@ -58,9 +58,10 @@ def chat():
         ClearHistoryAction(console),
         CompressHistoryAction(console, vendor, model_option),
         # Last so it can catch all cmds in shell mode.
+        ChatAction(console, vendor, model_option),
         ShellAction(console, vendor, model_option),
         SSHAction(console, vendor, model_option),
-        ChatAction(console, vendor, model_option),
+        TaskAction(console, vendor, model_option),
     ]
     cmd_options = [*CMD_OPTIONS]
     for action in actions:
@@ -129,6 +130,8 @@ def print_separator(state: ChatState):
         color_setting = "[yellow]"
     if state.mode == ChatMode.Ssh:
         color_setting = "[magenta]"
+    if state.mode == ChatMode.Task:
+        color_setting = "[cyan]"
 
     console.print(f"{color_setting}{msg_prefix}{ssh_prefix}{separator}{msg_suffix}", style="dim")
 
