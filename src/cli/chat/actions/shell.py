@@ -73,7 +73,7 @@ class ShellAction(BaseAction):
         model = self.vendor.MODEL_OPTIONS[self.model_option]
         with Progress(transient=True) as progress:
             progress.add_task(
-                f"[red]Generating shell command {self.vendor.MODEL_NAME} {self.model_option}...",
+                f"[red]Generating shell command {self.vendor.MODEL_NAME} ({self.model_option})...",
                 start=False,
                 total=None,
             )
@@ -123,7 +123,7 @@ class ShellAction(BaseAction):
 
             with Progress(transient=True) as progress:
                 progress.add_task(
-                    f"[red]Analysing shell output {self.vendor.MODEL_NAME} {self.model_option}...",
+                    f"[red]Analysing shell output {self.vendor.MODEL_NAME} ({self.model_option})...",
                     start=False,
                     total=None,
                 )

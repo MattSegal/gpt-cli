@@ -184,11 +184,11 @@ class TaskAction(BaseAction):
         model = self.vendor.MODEL_OPTIONS[self.model_option]
         with Progress(transient=True) as progress:
             progress.add_task(
-                f"[red]Fetching response {self.vendor.MODEL_NAME} {self.model_option}...",
+                f"[red]Fetching response {self.vendor.MODEL_NAME} ({self.model_option})...",
                 start=False,
                 total=None,
             )
-            message = self.vendor.chat(self.task_thread, model, max_tokens=5 * 1024)
+            message = self.vendor.chat(self.task_thread, model, max_tokens=8192)
 
         self.task_thread.append(message)
         self.con.print(f"\nAssistant:")
@@ -229,7 +229,8 @@ def extract_task_script(message: str) -> str:
 
 TASK_EXIT_TOKEN = "TASK_GENERATION_COMPLETE"
 
-TASK_MODE_ENTRY_INSTRUCTION = """
+
+TASK_DEFINITION_INSTRUCTION = """
 You are now in "Task Mode"
 
 Your job is to generate a "task" in an interactive chat session with a user.
@@ -434,7 +435,3 @@ final message containing:
 - a Python script which contains the task's `run` function
 - The exit string {task_exit_token}
 """
-
-# Could better define what constitutes "understanding" the requirements
-# Could provide example dialogue or key questions that should be asked
-# Could specify format for intermediate discussion (e.g., how to present draft schemas)

@@ -47,7 +47,7 @@ class ChatAction(BaseAction):
         state.messages.append(ChatMessage(role=Role.User, content=query_text))
         with Progress(transient=True) as progress:
             progress.add_task(
-                f"[red]Asking {self.vendor.MODEL_NAME} {self.model_option}...",
+                f"[red]Asking {self.vendor.MODEL_NAME} ({self.model_option})...",
                 start=False,
                 total=None,
             )

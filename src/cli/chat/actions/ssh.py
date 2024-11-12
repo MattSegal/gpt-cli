@@ -1,6 +1,7 @@
 # WORK IN PROGRESS
 import click
 import paramiko
+import os
 from rich.console import Console
 from rich.padding import Padding
 from rich.markup import escape
@@ -153,7 +154,7 @@ class SSHAction(BaseAction):
 
         with Progress(transient=True) as progress:
             progress.add_task(
-                f"[red]Generating SSH command {self.vendor.MODEL_NAME} {self.model_option}...",
+                f"[red]Generating SSH command {self.vendor.MODEL_NAME} ({self.model_option})...",
                 start=False,
                 total=None,
             )
@@ -206,7 +207,7 @@ class SSHAction(BaseAction):
 
                 with Progress(transient=True) as progress:
                     progress.add_task(
-                        f"[red]Analysing SSH output {self.vendor.MODEL_NAME} {self.model_option}...",
+                        f"[red]Analysing SSH output {self.vendor.MODEL_NAME} ({self.model_option})...",
                         start=False,
                         total=None,
                     )
@@ -234,15 +235,28 @@ class SSHAction(BaseAction):
         host = click.prompt("Host", type=str)
         username = click.prompt("Username", type=str)
         port = click.prompt("Port", type=int, default=22)
-        return SshConfig(host=host, username=username, port=port)
+        key_filename = click.prompt("Private key file (optional)", type=str, default="")
+        return SshConfig(host=host, username=username, port=port, key_filename=key_filename)
 
     def connect_ssh(self, ssh_config: SshConfig) -> tuple[bool, str]:
         try:
             self.ssh_client = paramiko.SSHClient()
             self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            self.ssh_client.connect(
-                hostname=ssh_config.host, port=ssh_config.port, username=ssh_config.username
-            )
+
+            connect_kwargs = {
+                "hostname": ssh_config.host,
+                "port": ssh_config.port,
+                "username": ssh_config.username,
+            }
+
+            if ssh_config.key_filename:
+                key_path = os.path.expanduser(ssh_config.key_filename)
+                if os.path.exists(key_path):
+                    connect_kwargs["key_filename"] = key_path
+                else:
+                    return False, f"SSH key file not found: {key_path}"
+
+            self.ssh_client.connect(**connect_kwargs)
             self.current_host = f"{ssh_config.username}@{ssh_config.host}"
             self.system_info = self.get_system_info()
             return True, f"Connected to {self.current_host}"
@@ -256,7 +270,7 @@ def extract_ssh_command(assistant_message: str, vendor, model_option: str) -> st
     """
     model = vendor.MODEL_OPTIONS[model_option]
     query_text = f"""
-    Extract the proposed SSH command from this chat log.
+    Extract the proposed command from this chat log.
     Return only a single command and nothing else.
     This is the chat log:
     {assistant_message}

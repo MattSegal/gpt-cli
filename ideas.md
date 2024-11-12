@@ -17,223 +17,43 @@
 - siglip based image embeddings
 
 
-# Tasks System
-
-## Core Concepts
-
-- Tasks are self-contained modules that can be dynamically loaded
-- Each task has a clear single responsibility
-- Tasks can be chained together in workflows
-- Tasks can be shared and installed from a repository
-
-## Task Commands
-```bash
-\task list
-\task create
-\task delete <name>
-\task update  <name>
-\task inspect <name>
-\task run <name> [args]     # Run a specific task
-
-```
-
-## Task Structure
-```
-~/.ask/tasks/
-├── index.json             # Task registry
-├── web-scraper/      # Example task
-│   ├── entrypoint.py
-│   └── ...
-└── summarizer/
-    └── ...
-```
-
-## Task Registry (index.json)
-```json
-{
-    "tasks": [
-        {
-            "type": "task",
-            "name": "Web Scraper",
-            "description": "Scrapes content from websites with customizable rules",
-            "slug": "web-scraper",
-            "entrypoint": "entrypoint.py:task_handler",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "urls": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "format": "uri"
-                        }
-                    },
-                    "selectors": {
-                        "type": "object",
-                        "properties": {
-                            "title": {"type": "string"},
-                            "content": {"type": "string"}
-                        },
-                        "required": ["content"]
-                    }
-                },
-                "required": ["urls"]
-            },
-            "output_schema": {
-                "type": "object",
-                "properties": {
-                    "results": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "url": {"type": "string"},
-                                "title": {"type": "string"},
-                                "content": {"type": "string"},
-                                "timestamp": {"type": "string", "format": "date-time"}
-                            },
-                            "required": ["url", "content"]
-                        }
-                    }
-                },
-                "required": ["results"]
-            }
-        },
-        {
-            "type": "workflow",
-            "name": "News Aggregator",
-            "description": "Scrapes news and generates summaries",
-            "slug": "web-scraper",
-            "input_schema": {},
-            "output_schema": {},
-            "steps": [
-                {
-                    "task": "web-scraper",
-                    "config": {
-                        "urls": ["..."],
-                        "selectors": {"..."}
-                    }
-                },
-                {
-                    "task": "summarizer",
-                    "config": {
-                        "max_length": 200
-                    }
-                }
-            ]
-        }
-    ]
-}
-```
-
-## Task Implementation (entrypoint.py)
-```python
-from typing import Dict, Any
-from ask.tasks import TaskResult, TaskContext
-
-def task_handler(context: TaskContext, input_data: Dict[str, Any]) -> TaskResult:
-    """
-    Main entry point for the task.
-    
-    Args:
-        context: Task execution context (logging, state, etc.)
-        input_data: Validated input matching input_schema
-        
-    Returns:
-        TaskResult containing output matching output_schema
-    """
-    # Task implementation
-    pass
-
-def validate() -> bool:
-    """Validate task requirements and dependencies"""
-    pass
-
-def cleanup() -> None:
-    """Clean up any resources"""
-    pass
-```
-
-## Advanced Features
-
-### Task Context
-- Provides logging, state management, and progress tracking
-- Access to shared resources and credentials
-- Rate limiting and quota management
-- Caching layer for intermediate results
-
-### Workflow Engine
-- Visual workflow builder in CLI
-- Parallel task execution where possible
-- Error handling and retry logic
-- Conditional branching based on task outputs
-- Progress visualization
-- Workflow export/import
-
-### Task Repository
-- Central repository for sharing tasks
-- Version management
-- Dependency resolution
-- Security scanning
-- Rating and review system
-
-### Documentation
-- Auto-generated task documentation
-- Usage examples and templates
-- Input/output schema visualization
-- Performance metrics and requirements
-
-### Integration Features
-- Event hooks for task lifecycle
-- Plugin system for extending functionality
-- API endpoints for remote execution
-- Export results in multiple formats
-- Integration with external tools
-
-This structure provides a robust foundation for:
-1. Easy task development and sharing
-2. Complex workflow automation
-3. Proper error handling and validation
-4. Scalability and maintenance
-5. Community contribution
-
-Would you like me to elaborate on any particular aspect?
-
-
 # Tasks
 
-- dynamic user defined tasks (eg summarise, crawl)
-- documentation mode (document the steps you took)
-- multiple threads
+workflow (current)
 
-\agent  use all available commands to complete a task
-\tasks  list all tasks
-\task   execute a particular task with a prompt
-
-
-task
-    - scrape these news websites
-    - get articles from each category
-    - allow user to see the news (news summary?)
+1) initial task definition
+    - task mode prompt
+    - define task w/ user feedback
+    - one-shot generate script
+2) save task
+    - save metadata and script to disk
+3) run task
+    - load and run script's `run` method
 
 
-task output
+workflow (ideal)
 
-~/.ask/tasks
-~/.ask/tasks/index.json
-```json
-[
-    {
-        name: "Task Name",
-        description: "Task description",
-        slug: "task-name" # Unique
-        input
-    }
+1) initial task definition
+    - task mode prompt
+    - define task w/ user feedback
+    - output task metadata inc a new "user_goal" key 
+    - save metadata to index.json with "status": "CREATING"
+    - save results to README.md
+2) incremental script generation
+    - generate a script plan defining the incremental units required to make the script work
+    - save plan to README.md
+    - for each incremental unit
+        - write a function for that unit
+        - add the function to the main method
+        - write a test for that function ()
+        - run the script to check for data (eg. html)
+        - request data from the user if required (eg. documentation) (save to README.md)
+    - once all units are written and tested move to final test and acceptance
+3) final test and acceptance
+    - run the task end-to end
+    - ask the user if it looks good
+    - if not go back to step 2
 
-]
-```
 
-~/.ask/tasks/task-slug/
-    entrypoint.py
-        def task_handler
-    # other files as required
+X) save task
+X) run taks

@@ -28,6 +28,7 @@ prompt-toolkit = "^3.0.48"
 psutil = "^6.1.0"
 paramiko = "^3.5.0"
 jsonschema = "^4.23.0"
+pytest = "^8.3.3"
 
 [tool.isort]
 known_first_party = ["src"]

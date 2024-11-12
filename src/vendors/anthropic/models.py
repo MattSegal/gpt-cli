@@ -1,10 +1,10 @@
 class ClaudeModel:
-    Sonnet = "claude-3-5-sonnet-20241022"
-    Haiku = "claude-3-haiku-20240307"
+    Sonnet = "claude-3-5-sonnet-latest"
+    Haiku = "claude-3-5-haiku-20241022"
 
 
 MODEL_NAME = "Claude"
-DEFAULT_MODEL_OPTION = "sonnet"
+DEFAULT_MODEL_OPTION = "haiku"
 MODEL_OPTIONS = {
     "sonnet": ClaudeModel.Sonnet,
     "haiku": ClaudeModel.Haiku,

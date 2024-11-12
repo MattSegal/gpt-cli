@@ -25,6 +25,7 @@ class SshConfig(BaseModel):
     host: str
     username: str
     port: int = 22
+    key_filename: str = ""
 
     @property
     def conn_name(self) -> str:
