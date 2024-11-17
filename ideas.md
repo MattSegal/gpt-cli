@@ -1,9 +1,19 @@
 # General UX
+
 - saved / resumable chat history
 - cost tracking of user queries
 - file UX improvements
     - file path completion?
     - file explorer ui?
+
+# Command mode
+
+- make it more generic, handling many modes
+    - docker exec
+    - aws ecs shell
+    - ssh
+    - commands on local machine
+    - psql
 
 # Distribution
 
@@ -12,6 +22,7 @@
 
 
 # Search
+
 - index folders / RAG on disk
 - openai based text enbeddings
 - siglip based image embeddings

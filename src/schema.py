@@ -7,7 +7,10 @@ class ChatMode(str, enum.Enum):
     Chat = "chat"
     Shell = "shell"
     Ssh = "ssh"
-    Task = "task"
+    _TaskPrefix = "task_"
+    TaskDefine = "task_define"
+    TaskPlan = "task_plan"
+    TaskIterate = "task_iterate"
 
 
 class Role(str, enum.Enum):
@@ -34,7 +37,9 @@ class SshConfig(BaseModel):
 
 class ChatState(BaseModel):
     messages: list[ChatMessage]
+    task_thread: list[ChatMessage]
     mode: ChatMode
+    task_slug: str | None
     ssh_config: SshConfig | None
 
 

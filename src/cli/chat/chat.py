@@ -51,7 +51,13 @@ def chat():
 
     model_option = vendor.DEFAULT_MODEL_OPTION
     console.print(f"[green]Chatting with {vendor.MODEL_NAME} {model_option}")
-    state = ChatState(mode=ChatMode.Chat, messages=[], ssh_config=None)
+    state = ChatState(
+        mode=ChatMode.Chat,
+        messages=[],
+        ssh_config=None,
+        task_thread=[],
+        task_slug=None,
+    )
     actions = [
         ReadWebAction(console),
         ReadFileAction(console),
@@ -114,10 +120,16 @@ def build_key_bindings():
 
 
 def print_separator(state: ChatState):
-    num_messages = len(state.messages)
-    total_chars = sum(len(m.content) for m in state.messages)
+    if state.mode.startswith(ChatMode._TaskPrefix):
+        messages = state.task_thread
+    else:
+        messages = state.messages
 
-    msg_prefix = f"\[{state.mode} mode]"
+    num_messages = len(messages)
+    total_chars = sum(len(m.content) for m in messages)
+
+    mode_display = state.mode.replace("_", " ")
+    msg_prefix = f"\[{mode_display} mode]"
     ssh_prefix = ""
     if state.ssh_config is not None:
         ssh_prefix = f"\[connected to {state.ssh_config.conn_name}]"
@@ -130,7 +142,7 @@ def print_separator(state: ChatState):
         color_setting = "[yellow]"
     if state.mode == ChatMode.Ssh:
         color_setting = "[magenta]"
-    if state.mode == ChatMode.Task:
+    if state.mode.startswith(ChatMode._TaskPrefix):
         color_setting = "[cyan]"
 
     console.print(f"{color_setting}{msg_prefix}{ssh_prefix}{separator}{msg_suffix}", style="dim")

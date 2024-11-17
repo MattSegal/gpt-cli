@@ -67,13 +67,40 @@ def save_tasks(tasks: dict[str, TaskMeta]):
         return json.dump({slug: t.model_dump() for slug, t in tasks.items()}, f, indent=2)
 
 
-def save_task(task: TaskMeta, python_script: str):
+def save_task(task: TaskMeta):
     tasks = load_tasks()
     tasks[task.slug] = task
     save_tasks(tasks)
+
+
+def load_task_script(task: TaskMeta) -> str | None:
+    task_script_path = TASKS_DIR / f"{task.slug}.py"
+    if not task_script_path.exists():
+        return None
+
+    with open(task_script_path, "r") as f:
+        return f.read()
+
+
+def save_task_script(task: TaskMeta, python_script: str):
     task_script_path = TASKS_DIR / f"{task.slug}.py"
     with open(task_script_path, "w") as f:
         f.write(python_script)
+
+
+def load_task_plan(task: TaskMeta) -> str | None:
+    task_plan_path = TASKS_DIR / f"{task.slug}-plan.txt"
+    if not task_plan_path.exists():
+        return None
+
+    with open(task_plan_path, "r") as f:
+        return f.read()
+
+
+def save_task_plan(task: TaskMeta, plan_text: str):
+    task_plan_path = TASKS_DIR / f"{task.slug}-plan.txt"
+    with open(task_plan_path, "w") as f:
+        f.write(plan_text)
 
 
 def delete_task(slug: str) -> list[TaskMeta]:
