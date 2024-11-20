@@ -10,7 +10,7 @@ Usage: ask [OPTIONS] COMMAND [ARGS]...
   Examples:
     ask how do I flatten a list in python
     ask ffmpeg convert webm to a gif
-    ask what is the best restaurant in melbourne
+    ask what is the best restaurant in melbourne?
     echo 'hello world' | ask what does this text say
     ask web http://example.com | ask what does this website say
 
